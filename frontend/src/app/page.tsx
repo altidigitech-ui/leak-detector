@@ -2,168 +2,153 @@ import Link from 'next/link';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="text-xl font-bold text-primary-600">
-            My SaaS
-          </div>
-          <nav className="flex items-center gap-6">
-            <Link href="#features" className="text-gray-600 hover:text-gray-900">
-              Features
-            </Link>
-            <Link href="#pricing" className="text-gray-600 hover:text-gray-900">
+      <header className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/" className="text-xl font-bold text-primary-600">
+            🔍 Leak Detector
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
               Pricing
             </Link>
-            <Link 
-              href="/login" 
-              className="text-gray-600 hover:text-gray-900"
-            >
-              Log in
+            <Link href="/login" className="text-gray-600 hover:text-gray-900">
+              Login
             </Link>
-            <Link
-              href="/register"
-              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              Get Started
+            <Link href="/register" className="btn-primary">
+              Get Started Free
             </Link>
-          </nav>
+          </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="py-20 lg:py-32">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
-            Your Main Headline Here
+      <section className="py-20 bg-gradient-to-b from-primary-50 to-white">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Find What Makes Visitors
+            <span className="text-primary-600"> Leave Your Page</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            A compelling subheadline that explains your value proposition in one or two sentences.
+            Get an instant AI-powered analysis of your landing page. Identify conversion
+            leaks and get actionable recommendations in 30 seconds.
           </p>
-          <div className="flex items-center justify-center gap-4">
-            <Link
-              href="/register"
-              className="bg-primary-600 text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-primary-700 transition-colors"
-            >
-              Start Free Trial
+          <div className="flex justify-center gap-4">
+            <Link href="/register" className="btn-primary text-lg px-8 py-3">
+              Analyze My Page Free
             </Link>
-            <Link
-              href="#demo"
-              className="border border-gray-300 text-gray-700 px-8 py-3 rounded-lg text-lg font-medium hover:bg-gray-50 transition-colors"
-            >
-              Watch Demo
+            <Link href="#how-it-works" className="btn-secondary text-lg px-8 py-3">
+              See How It Works
             </Link>
           </div>
+          <p className="mt-4 text-sm text-gray-500">
+            No credit card required • 3 free analyses per month
+          </p>
         </div>
       </section>
 
       {/* Features */}
-      <section id="features" className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Features
+      <section className="py-20" id="features">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            8 Categories Analyzed
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                  <span className="text-primary-600 text-xl">✨</span>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Feature {i}
-                </h3>
-                <p className="text-gray-600">
-                  Description of this feature and how it helps your users solve their problems.
-                </p>
+          <div className="grid md:grid-cols-4 gap-6">
+            {[
+              { icon: '📝', title: 'Headline', desc: 'Clarity and value proposition' },
+              { icon: '🎯', title: 'Call-to-Action', desc: 'Visibility and wording' },
+              { icon: '⭐', title: 'Social Proof', desc: 'Testimonials and trust signals' },
+              { icon: '📋', title: 'Forms', desc: 'Friction and field count' },
+              { icon: '👁️', title: 'Visual Hierarchy', desc: 'Layout and readability' },
+              { icon: '🔒', title: 'Trust', desc: 'Security and credibility' },
+              { icon: '📱', title: 'Mobile', desc: 'Responsive design' },
+              { icon: '⚡', title: 'Speed', desc: 'Load time and performance' },
+            ].map((feature) => (
+              <div key={feature.title} className="card text-center">
+                <div className="text-3xl mb-3">{feature.icon}</div>
+                <h3 className="font-semibold mb-1">{feature.title}</h3>
+                <p className="text-sm text-gray-600">{feature.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
-            Simple Pricing
+      {/* How it works */}
+      <section className="py-20 bg-gray-50" id="how-it-works">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            How It Works
           </h2>
-          <p className="text-center text-gray-600 mb-12">
-            Choose the plan that works for you
-          </p>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Free */}
-            <div className="border rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-2">Free</h3>
-              <div className="text-3xl font-bold mb-4">$0<span className="text-lg text-gray-500">/mo</span></div>
-              <ul className="space-y-2 mb-6 text-gray-600">
-                <li>✓ Feature 1</li>
-                <li>✓ Feature 2</li>
-                <li>✓ Limited usage</li>
-              </ul>
-              <Link
-                href="/register"
-                className="block text-center border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Get Started
-              </Link>
-            </div>
-            
-            {/* Pro */}
-            <div className="border-2 border-primary-600 rounded-xl p-6 relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-sm px-3 py-1 rounded-full">
-                Popular
+          <div className="space-y-8">
+            {[
+              { step: '1', title: 'Paste Your URL', desc: 'Enter your landing page URL in our analyzer.' },
+              { step: '2', title: 'AI Analysis', desc: 'Our AI scrapes and analyzes your page in 30 seconds.' },
+              { step: '3', title: 'Get Your Report', desc: 'Receive a detailed report with scores and recommendations.' },
+            ].map((item) => (
+              <div key={item.step} className="flex items-start gap-6">
+                <div className="w-12 h-12 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0">
+                  {item.step}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                  <p className="text-gray-600">{item.desc}</p>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Pro</h3>
-              <div className="text-3xl font-bold mb-4">$29<span className="text-lg text-gray-500">/mo</span></div>
-              <ul className="space-y-2 mb-6 text-gray-600">
-                <li>✓ Everything in Free</li>
-                <li>✓ Unlimited usage</li>
-                <li>✓ Priority support</li>
-              </ul>
-              <Link
-                href="/register?plan=pro"
-                className="block text-center bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 transition-colors"
-              >
-                Start Trial
-              </Link>
-            </div>
-            
-            {/* Enterprise */}
-            <div className="border rounded-xl p-6">
-              <h3 className="text-lg font-semibold mb-2">Enterprise</h3>
-              <div className="text-3xl font-bold mb-4">Custom</div>
-              <ul className="space-y-2 mb-6 text-gray-600">
-                <li>✓ Everything in Pro</li>
-                <li>✓ Custom integrations</li>
-                <li>✓ Dedicated support</li>
-              </ul>
-              <Link
-                href="/contact"
-                className="block text-center border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Contact Us
-              </Link>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* CTA */}
+      <section className="py-20">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-6">
+            Ready to Fix Your Landing Page?
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Join thousands of marketers who improved their conversion rates with Leak Detector.
+          </p>
+          <Link href="/register" className="btn-primary text-lg px-8 py-3">
+            Start Free Analysis
+          </Link>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="border-t py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-600 mb-4 md:mb-0">
-              © 2026 My SaaS. All rights reserved.
+      <footer className="bg-gray-900 text-gray-400 py-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <h4 className="text-white font-semibold mb-4">Leak Detector</h4>
+              <p className="text-sm">
+                AI-powered landing page analysis for better conversions.
+              </p>
             </div>
-            <div className="flex gap-6">
-              <Link href="/terms" className="text-gray-600 hover:text-gray-900">
-                Terms
-              </Link>
-              <Link href="/privacy" className="text-gray-600 hover:text-gray-900">
-                Privacy
-              </Link>
+            <div>
+              <h4 className="text-white font-semibold mb-4">Product</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
+                <li><Link href="#features" className="hover:text-white">Features</Link></li>
+              </ul>
             </div>
+            <div>
+              <h4 className="text-white font-semibold mb-4">Legal</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-semibold mb-4">Contact</h4>
+              <ul className="space-y-2 text-sm">
+                <li>support@leakdetector.io</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
+            © 2026 Leak Detector. All rights reserved.
           </div>
         </div>
       </footer>
