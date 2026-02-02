@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Strict mode for better development
   reactStrictMode: true,
-  
-  // Image optimization
   images: {
     remotePatterns: [
       {
@@ -12,43 +9,25 @@ const nextConfig = {
       },
     ],
   },
-  
-  // Security headers
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/:path*',
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
+            value: 'DENY',
           },
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
           {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
           },
         ],
       },
-    ];
-  },
-  
-  // Redirects
-  async redirects() {
-    return [
-      // Example redirect
-      // {
-      //   source: '/old-page',
-      //   destination: '/new-page',
-      //   permanent: true,
-      // },
     ];
   },
 };
