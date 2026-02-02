@@ -1,79 +1,91 @@
 """
 Structured logging configuration using structlog.
 """
+
 import logging
 import sys
 from typing import Any
 
 import structlog
-from structlog.types import Processor
 
 from app.config import settings
 
 
 def setup_logging() -> None:
-    """
-    Configure structured logging for the application.
+    """Configure structured logging for the application."""
     
-    - Development: Human-readable colored output
-    - Production: JSON output for log aggregation
-    """
+    # Determine log level
+    log_level = logging.DEBUG if settings.APP_DEBUG else logging.INFO
     
-    # Shared processors
-    shared_processors: list[Processor] = [
-        structlog.contextvars.merge_contextvars,
-        structlog.processors.add_log_level,
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.TimeStamper(fmt="iso"),
-    ]
-    
-    if settings.is_production:
-        # Production: JSON logs
-        shared_processors.extend([
-            structlog.processors.format_exc_info,
-            structlog.processors.JSONRenderer(),
-        ])
-    else:
-        # Development: Pretty logs
-        shared_processors.extend([
-            structlog.dev.ConsoleRenderer(colors=True),
-        ])
-    
-    structlog.configure(
-        processors=shared_processors,
-        wrapper_class=structlog.make_filtering_bound_logger(
-            logging.DEBUG if settings.APP_DEBUG else logging.INFO
-        ),
-        context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
-    
-    # Configure standard library logging to use structlog
+    # Configure standard logging
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
-        level=logging.DEBUG if settings.APP_DEBUG else logging.INFO,
+        level=log_level,
     )
     
-    # Reduce noise from third-party libraries
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("httpcore").setLevel(logging.WARNING)
-    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    # Shared processors
+    shared_processors = [
+        structlog.contextvars.merge_contextvars,
+        structlog.processors.add_log_level,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.stdlib.ExtraAdder(),
+    ]
+    
+    # Configure structlog
+    if settings.is_production:
+        # JSON format for production
+        structlog.configure(
+            processors=shared_processors + [
+                structlog.processors.JSONRenderer(),
+            ],
+            wrapper_class=structlog.stdlib.BoundLogger,
+            context_class=dict,
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            cache_logger_on_first_use=True,
+        )
+    else:
+        # Pretty console output for development
+        structlog.configure(
+            processors=shared_processors + [
+                structlog.dev.ConsoleRenderer(colors=True),
+            ],
+            wrapper_class=structlog.stdlib.BoundLogger,
+            context_class=dict,
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            cache_logger_on_first_use=True,
+        )
 
 
-def get_logger(name: str | None = None) -> Any:
+def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     """
-    Get a logger instance.
+    Get a logger instance for the given name.
     
     Args:
-        name: Optional logger name
+        name: The logger name (usually __name__)
         
     Returns:
-        Configured structlog logger
-        
-    Usage:
-        logger = get_logger(__name__)
-        logger.info("user_created", user_id="123", email="user@example.com")
+        A configured structlog logger
     """
     return structlog.get_logger(name)
+
+
+def log_with_context(logger: Any, level: str, event: str, **kwargs) -> None:
+    """
+    Log with additional context.
+    
+    Args:
+        logger: The logger instance
+        level: Log level (info, warning, error, etc.)
+        event: The event name
+        **kwargs: Additional context
+    """
+    log_method = getattr(logger, level, logger.info)
+    
+    # Filter out sensitive data
+    safe_kwargs = {
+        k: v for k, v in kwargs.items()
+        if k not in ("password", "token", "api_key", "secret")
+    }
+    
+    log_method(event, **safe_kwargs)
