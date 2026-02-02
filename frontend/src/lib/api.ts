@@ -1,6 +1,4 @@
-import { getClient } from './supabase/client';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface ApiResponse<T> {
   success: boolean;
@@ -10,133 +8,91 @@ interface ApiResponse<T> {
     message: string;
     details?: Record<string, any>;
   };
-  meta?: {
-    page: number;
-    limit: number;
-    total: number;
-    total_pages: number;
-  };
+  meta?: Record<string, any>;
 }
 
-interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  body?: Record<string, any>;
-  params?: Record<string, string | number>;
-  headers?: Record<string, string>;
-}
+class ApiClient {
+  private accessToken: string | null = null;
 
-/**
- * Get the current session token
- */
-async function getToken(): Promise<string | null> {
-  const supabase = getClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token || null;
-}
-
-/**
- * Build URL with query params
- */
-function buildUrl(path: string, params?: Record<string, string | number>): string {
-  const url = new URL(`${API_URL}/api/v1${path}`);
-  
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, String(value));
-    });
+  setAccessToken(token: string | null) {
+    this.accessToken = token;
   }
-  
-  return url.toString();
-}
 
-/**
- * Make an API request
- */
-async function request<T>(
-  path: string,
-  options: RequestOptions = {}
-): Promise<ApiResponse<T>> {
-  const { method = 'GET', body, params, headers = {} } = options;
-  
-  const token = await getToken();
-  
-  const requestHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...headers,
-  };
-  
-  if (token) {
-    requestHeaders['Authorization'] = `Bearer ${token}`;
-  }
-  
-  try {
-    const response = await fetch(buildUrl(path, params), {
-      method,
-      headers: requestHeaders,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    
-    const data = await response.json();
-    
-    return data as ApiResponse<T>;
-  } catch (error) {
-    console.error('API request failed:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Unable to connect to the server. Please check your connection.',
-      },
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
     };
+
+    if (this.accessToken) {
+      (headers as Record<string, string>)['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    const data = await response.json();
+    return data;
+  }
+
+  // Analyses
+  async createAnalysis(url: string) {
+    return this.request<{ id: string; url: string; status: string }>('/api/v1/analyses', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+  }
+
+  async getAnalysis(id: string) {
+    return this.request<{ id: string; url: string; status: string; error_message?: string }>(
+      `/api/v1/analyses/${id}`
+    );
+  }
+
+  async listAnalyses(limit = 20, offset = 0) {
+    return this.request<any[]>(`/api/v1/analyses?limit=${limit}&offset=${offset}`);
+  }
+
+  // Reports
+  async getReport(id: string) {
+    return this.request<any>(`/api/v1/reports/${id}`);
+  }
+
+  async getReportByAnalysis(analysisId: string) {
+    return this.request<any>(`/api/v1/reports/by-analysis/${analysisId}`);
+  }
+
+  async listReports(limit = 20, offset = 0) {
+    return this.request<any[]>(`/api/v1/reports?limit=${limit}&offset=${offset}`);
+  }
+
+  // Billing
+  async createCheckout(priceId: string) {
+    return this.request<{ url: string }>('/api/v1/billing/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ price_id: priceId }),
+    });
+  }
+
+  async createPortalSession() {
+    return this.request<{ url: string }>('/api/v1/billing/portal', {
+      method: 'POST',
+    });
+  }
+
+  async getBillingStatus() {
+    return this.request<{
+      plan: string;
+      analyses_used: number;
+      analyses_limit: number;
+      subscription?: { status: string; current_period_end: string };
+    }>('/api/v1/billing/status');
   }
 }
 
-/**
- * API client with typed methods
- */
-export const api = {
-  get: <T>(path: string, params?: Record<string, string | number>) =>
-    request<T>(path, { method: 'GET', params }),
-  
-  post: <T>(path: string, body?: Record<string, any>) =>
-    request<T>(path, { method: 'POST', body }),
-  
-  put: <T>(path: string, body?: Record<string, any>) =>
-    request<T>(path, { method: 'PUT', body }),
-  
-  patch: <T>(path: string, body?: Record<string, any>) =>
-    request<T>(path, { method: 'PATCH', body }),
-  
-  delete: <T>(path: string) =>
-    request<T>(path, { method: 'DELETE' }),
-};
-
-// ============================================================================
-// Typed API functions for specific resources
-// ============================================================================
-
-// Profile
-export interface Profile {
-  id: string;
-  email: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  subscription_status: string;
-  subscription_tier: string | null;
-  credits_remaining: number;
-  created_at: string;
-}
-
-export const profileApi = {
-  get: () => api.get<Profile>('/profile'),
-  update: (data: Partial<Profile>) => api.patch<Profile>('/profile', data),
-};
-
-// Add more typed API functions as needed for your features
-// export const reportsApi = {
-//   list: (params?: { page?: number; limit?: number; status?: string }) =>
-//     api.get<Report[]>('/reports', params),
-//   get: (id: string) => api.get<Report>(`/reports/${id}`),
-//   create: (data: CreateReportInput) => api.post<Report>('/reports', data),
-//   delete: (id: string) => api.delete(`/reports/${id}`),
-// };
+export const apiClient = new ApiClient();
