@@ -7,7 +7,7 @@
 ## Phase 1 — Setup & Infrastructure (J+2)
 
 ### Backend
-- [ ] 🔴 Init repo avec structure depuis saas-templates
+- [ ] 🔴 Init repo avec structure
 - [ ] 🔴 Configurer Supabase (projet + tables)
 - [ ] 🔴 Configurer Railway (backend + Redis)
 - [ ] 🔴 Variables d'environnement
@@ -15,7 +15,7 @@
 - [ ] 🟡 Sentry monitoring
 
 ### Frontend
-- [ ] 🔴 Init Next.js depuis saas-templates
+- [ ] 🔴 Init Next.js
 - [ ] 🔴 Configurer Vercel
 - [ ] 🔴 Setup Supabase Auth client
 - [ ] 🔴 Layout de base (header, sidebar)
@@ -186,6 +186,14 @@
 | Bulk analysis | P3 | Analyser plusieurs URLs |
 | Scheduled analysis | P3 | Re-analyse auto |
 | Intégration Slack | P3 | Notif dans Slack |
+
+---
+
+## Légende
+
+- 🔴 Critical (bloquant)
+- 🟡 Important (pas bloquant)
+- 🟢 Nice to have
 
 ---
 
