@@ -1,273 +1,226 @@
 """
-Supabase client singleton and utilities.
+Supabase service - Database operations.
 """
-from functools import lru_cache
-from typing import Any, Dict, List, Optional
 
-from supabase import Client, create_client
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+from supabase import create_client, Client
 
 from app.config import settings
+from app.core.logging import get_logger
 
-
-@lru_cache()
-def get_supabase_client() -> Client:
-    """
-    Get cached Supabase client instance.
-    Uses service key for server-side operations (bypasses RLS).
-    
-    Returns:
-        Supabase client configured with service key
-    """
-    return create_client(
-        settings.SUPABASE_URL,
-        settings.SUPABASE_SERVICE_KEY,
-    )
-
-
-@lru_cache()
-def get_supabase_anon_client() -> Client:
-    """
-    Get cached Supabase client with anon key.
-    Use this for operations that should respect RLS.
-    
-    Returns:
-        Supabase client configured with anon key
-    """
-    return create_client(
-        settings.SUPABASE_URL,
-        settings.SUPABASE_ANON_KEY,
-    )
+logger = get_logger(__name__)
 
 
 class SupabaseService:
-    """
-    Service class for Supabase operations.
-    Provides type-safe wrappers around common operations.
-    """
+    """Service for Supabase database operations."""
     
-    def __init__(self, client: Optional[Client] = None):
-        self.client = client or get_supabase_client()
-    
-    # -------------------------------------------------------------------------
-    # Generic CRUD operations
-    # -------------------------------------------------------------------------
-    
-    async def get_by_id(
-        self,
-        table: str,
-        id: str,
-        select: str = "*",
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Get a single record by ID.
-        
-        Args:
-            table: Table name
-            id: Record UUID
-            select: Columns to select
-            
-        Returns:
-            Record dict or None if not found
-        """
-        response = (
-            self.client
-            .table(table)
-            .select(select)
-            .eq("id", id)
-            .single()
-            .execute()
+    def __init__(self):
+        self.client: Client = create_client(
+            settings.SUPABASE_URL,
+            settings.SUPABASE_SERVICE_KEY,  # Use service key for backend
         )
-        return response.data if response.data else None
     
-    async def get_by_field(
-        self,
-        table: str,
-        field: str,
-        value: Any,
-        select: str = "*",
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Get a single record by field value.
-        
-        Args:
-            table: Table name
-            field: Field name to filter by
-            value: Field value
-            select: Columns to select
-            
-        Returns:
-            Record dict or None if not found
-        """
-        response = (
-            self.client
-            .table(table)
-            .select(select)
-            .eq(field, value)
-            .limit(1)
-            .execute()
-        )
-        return response.data[0] if response.data else None
-    
-    async def list(
-        self,
-        table: str,
-        select: str = "*",
-        filters: Optional[Dict[str, Any]] = None,
-        order_by: str = "created_at",
-        ascending: bool = False,
-        limit: int = 20,
-        offset: int = 0,
-    ) -> List[Dict[str, Any]]:
-        """
-        List records with filtering and pagination.
-        
-        Args:
-            table: Table name
-            select: Columns to select
-            filters: Dict of field -> value filters (eq only)
-            order_by: Column to sort by
-            ascending: Sort direction
-            limit: Max records to return
-            offset: Records to skip
-            
-        Returns:
-            List of record dicts
-        """
-        query = self.client.table(table).select(select)
-        
-        # Apply filters
-        if filters:
-            for field, value in filters.items():
-                query = query.eq(field, value)
-        
-        # Apply ordering and pagination
-        response = (
-            query
-            .order(order_by, desc=not ascending)
-            .range(offset, offset + limit - 1)
-            .execute()
-        )
-        
-        return response.data or []
-    
-    async def count(
-        self,
-        table: str,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> int:
-        """
-        Count records matching filters.
-        
-        Args:
-            table: Table name
-            filters: Dict of field -> value filters
-            
-        Returns:
-            Count of matching records
-        """
-        query = self.client.table(table).select("*", count="exact")
-        
-        if filters:
-            for field, value in filters.items():
-                query = query.eq(field, value)
-        
-        response = query.limit(0).execute()
-        return response.count or 0
-    
-    async def create(
-        self,
-        table: str,
-        data: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """
-        Create a new record.
-        
-        Args:
-            table: Table name
-            data: Record data
-            
-        Returns:
-            Created record dict
-        """
-        response = (
-            self.client
-            .table(table)
-            .insert(data)
-            .execute()
-        )
-        return response.data[0]
-    
-    async def update(
-        self,
-        table: str,
-        id: str,
-        data: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """
-        Update a record by ID.
-        
-        Args:
-            table: Table name
-            id: Record UUID
-            data: Fields to update
-            
-        Returns:
-            Updated record dict
-        """
-        response = (
-            self.client
-            .table(table)
-            .update(data)
-            .eq("id", id)
-            .execute()
-        )
-        return response.data[0]
-    
-    async def delete(
-        self,
-        table: str,
-        id: str,
-    ) -> bool:
-        """
-        Delete a record by ID.
-        
-        Args:
-            table: Table name
-            id: Record UUID
-            
-        Returns:
-            True if deleted
-        """
-        self.client.table(table).delete().eq("id", id).execute()
-        return True
-    
-    # -------------------------------------------------------------------------
-    # Profile-specific operations
-    # -------------------------------------------------------------------------
+    # ==================== PROFILES ====================
     
     async def get_profile(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """Get user profile by user ID."""
-        return await self.get_by_id("profiles", user_id)
+        """Get user profile by ID."""
+        response = self.client.table("profiles").select("*").eq("id", user_id).single().execute()
+        return response.data if response.data else None
     
-    async def update_profile(
+    async def get_profile_by_stripe_customer(self, customer_id: str) -> Optional[Dict[str, Any]]:
+        """Get user profile by Stripe customer ID."""
+        response = self.client.table("profiles").select("*").eq("stripe_customer_id", customer_id).single().execute()
+        return response.data if response.data else None
+    
+    async def update_profile(self, user_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update user profile."""
+        response = self.client.table("profiles").update(data).eq("id", user_id).execute()
+        return response.data[0] if response.data else {}
+    
+    async def increment_analyses_used(self, user_id: str) -> None:
+        """Increment the analyses_used counter."""
+        # Use RPC for atomic increment
+        self.client.rpc("increment_analyses_used", {"p_user_id": user_id}).execute()
+    
+    async def reset_analyses_used(self, user_id: str) -> None:
+        """Reset analyses_used to 0."""
+        await self.update_profile(user_id, {"analyses_used": 0})
+    
+    # ==================== ANALYSES ====================
+    
+    async def create_analysis(self, user_id: str, url: str) -> Dict[str, Any]:
+        """Create a new analysis record."""
+        response = self.client.table("analyses").insert({
+            "user_id": user_id,
+            "url": url,
+            "status": "pending",
+        }).execute()
+        return response.data[0]
+    
+    async def get_analysis(self, analysis_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get analysis by ID (with user check)."""
+        response = self.client.table("analyses").select("*").eq("id", analysis_id).eq("user_id", user_id).single().execute()
+        return response.data if response.data else None
+    
+    async def get_analysis_by_id(self, analysis_id: str) -> Optional[Dict[str, Any]]:
+        """Get analysis by ID (no user check - for workers)."""
+        response = self.client.table("analyses").select("*").eq("id", analysis_id).single().execute()
+        return response.data if response.data else None
+    
+    async def list_analyses(
         self,
         user_id: str,
-        data: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """Update user profile."""
-        return await self.update("profiles", user_id, data)
+        limit: int = 20,
+        offset: int = 0,
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """List analyses for a user with pagination."""
+        # Get total count
+        count_response = self.client.table("analyses").select("id", count="exact").eq("user_id", user_id).execute()
+        total = count_response.count or 0
+        
+        # Get paginated results
+        response = self.client.table("analyses").select("*").eq("user_id", user_id).order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+        
+        return response.data or [], total
     
-    async def get_profile_by_stripe_customer(
+    async def update_analysis_status(
         self,
-        stripe_customer_id: str,
-    ) -> Optional[Dict[str, Any]]:
-        """Get profile by Stripe customer ID."""
-        return await self.get_by_field(
-            "profiles",
-            "stripe_customer_id",
-            stripe_customer_id,
+        analysis_id: str,
+        status: str,
+        error_code: Optional[str] = None,
+        error_message: Optional[str] = None,
+    ) -> None:
+        """Update analysis status."""
+        data = {"status": status}
+        
+        if status == "processing":
+            data["started_at"] = datetime.utcnow().isoformat()
+        elif status in ("completed", "failed"):
+            data["completed_at"] = datetime.utcnow().isoformat()
+        
+        if error_code:
+            data["error_code"] = error_code
+        if error_message:
+            data["error_message"] = error_message
+        
+        self.client.table("analyses").update(data).eq("id", analysis_id).execute()
+    
+    # ==================== REPORTS ====================
+    
+    async def create_report(
+        self,
+        analysis_id: str,
+        score: int,
+        summary: str,
+        categories: List[Dict[str, Any]],
+        screenshot_url: Optional[str] = None,
+        page_metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create a new report."""
+        response = self.client.table("reports").insert({
+            "analysis_id": analysis_id,
+            "score": score,
+            "summary": summary,
+            "categories": categories,
+            "issues": [],  # Extracted from categories
+            "screenshot_url": screenshot_url,
+            "page_metadata": page_metadata or {},
+        }).execute()
+        return response.data[0]
+    
+    async def get_report(self, report_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get report by ID with analysis join."""
+        response = self.client.table("reports").select("*, analyses!inner(url, user_id)").eq("id", report_id).eq("analyses.user_id", user_id).single().execute()
+        return response.data if response.data else None
+    
+    async def get_report_by_analysis(self, analysis_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get report by analysis ID."""
+        response = self.client.table("reports").select("*, analyses!inner(url, user_id)").eq("analysis_id", analysis_id).eq("analyses.user_id", user_id).single().execute()
+        return response.data if response.data else None
+    
+    async def list_reports(
+        self,
+        user_id: str,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """List reports for a user with pagination."""
+        # Get total count
+        count_response = self.client.table("reports").select("id, analyses!inner(user_id)", count="exact").eq("analyses.user_id", user_id).execute()
+        total = count_response.count or 0
+        
+        # Get paginated results
+        response = self.client.table("reports").select("*, analyses!inner(url, user_id)").eq("analyses.user_id", user_id).order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+        
+        return response.data or [], total
+    
+    # ==================== SUBSCRIPTIONS ====================
+    
+    async def upsert_subscription(
+        self,
+        user_id: str,
+        stripe_subscription_id: str,
+        stripe_price_id: str,
+        status: str,
+        current_period_start: int,
+        current_period_end: int,
+        cancel_at: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Create or update a subscription record."""
+        data = {
+            "user_id": user_id,
+            "stripe_subscription_id": stripe_subscription_id,
+            "stripe_price_id": stripe_price_id,
+            "status": status,
+            "current_period_start": datetime.fromtimestamp(current_period_start).isoformat(),
+            "current_period_end": datetime.fromtimestamp(current_period_end).isoformat(),
+        }
+        
+        if cancel_at:
+            data["cancel_at"] = datetime.fromtimestamp(cancel_at).isoformat()
+        
+        response = self.client.table("subscriptions").upsert(
+            data,
+            on_conflict="stripe_subscription_id",
+        ).execute()
+        
+        return response.data[0] if response.data else {}
+    
+    async def get_active_subscription(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get active subscription for user."""
+        response = self.client.table("subscriptions").select("*").eq("user_id", user_id).eq("status", "active").single().execute()
+        return response.data if response.data else None
+    
+    async def update_subscription_status(self, stripe_subscription_id: str, status: str) -> None:
+        """Update subscription status."""
+        self.client.table("subscriptions").update({"status": status}).eq("stripe_subscription_id", stripe_subscription_id).execute()
+    
+    # ==================== STORAGE ====================
+    
+    async def upload_screenshot(self, analysis_id: str, data: bytes) -> str:
+        """Upload screenshot to Supabase Storage."""
+        path = f"screenshots/{analysis_id}.png"
+        
+        self.client.storage.from_("screenshots").upload(
+            path,
+            data,
+            {"content-type": "image/png"},
         )
+        
+        # Get public URL
+        url = self.client.storage.from_("screenshots").get_public_url(path)
+        return url
 
 
 # Singleton instance
-supabase_service = SupabaseService()
+_supabase_service: Optional[SupabaseService] = None
+
+
+def get_supabase_service() -> SupabaseService:
+    """Get or create Supabase service instance."""
+    global _supabase_service
+    if _supabase_service is None:
+        _supabase_service = SupabaseService()
+    return _supabase_service
