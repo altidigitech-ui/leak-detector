@@ -1,6 +1,7 @@
 """
 Pytest configuration and fixtures.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -8,97 +9,100 @@ from app.main import app
 from app.config import settings
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def client():
     """Create a test client for the FastAPI app."""
-    with TestClient(app) as test_client:
-        yield test_client
+    with TestClient(app) as c:
+        yield c
 
 
 @pytest.fixture
-def mock_user():
-    """Return a mock user dict."""
+def auth_headers():
+    """
+    Create mock authentication headers.
+    In real tests, you would create a test user and get a real token.
+    """
+    # This is a mock token for testing
+    # In production tests, use a real test user
     return {
-        "id": "test-user-uuid-1234",
+        "Authorization": "Bearer test-token-for-testing-only"
+    }
+
+
+@pytest.fixture
+def sample_analysis():
+    """Sample analysis data for testing."""
+    return {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "user_id": "user-123",
+        "url": "https://example.com",
+        "status": "pending",
+        "created_at": "2026-02-02T10:00:00Z",
+    }
+
+
+@pytest.fixture
+def sample_report():
+    """Sample report data for testing."""
+    return {
+        "id": "660e8400-e29b-41d4-a716-446655440000",
+        "analysis_id": "550e8400-e29b-41d4-a716-446655440000",
+        "score": 72,
+        "summary": "Your landing page has good potential but has 3 critical issues.",
+        "categories": [
+            {
+                "name": "headline",
+                "label": "Headline",
+                "score": 85,
+                "issues": [
+                    {
+                        "severity": "warning",
+                        "title": "Headline too long",
+                        "description": "Your headline has 15 words, ideally less than 10.",
+                        "recommendation": "Condense your value proposition.",
+                    }
+                ],
+            },
+            {
+                "name": "cta",
+                "label": "Call-to-Action",
+                "score": 60,
+                "issues": [
+                    {
+                        "severity": "critical",
+                        "title": "CTA not visible",
+                        "description": "Button contrast is too low.",
+                        "recommendation": "Use a more contrasting color.",
+                    }
+                ],
+            },
+        ],
+        "screenshot_url": "https://storage.example.com/screenshot.png",
+        "page_metadata": {
+            "title": "Example Landing",
+            "load_time_ms": 2340,
+            "word_count": 450,
+        },
+        "created_at": "2026-02-02T10:00:30Z",
+    }
+
+
+@pytest.fixture
+def sample_profile():
+    """Sample user profile for testing."""
+    return {
+        "id": "user-123",
         "email": "test@example.com",
-        "role": "authenticated",
-        "user_metadata": {},
+        "full_name": "Test User",
+        "plan": "free",
+        "analyses_used": 1,
+        "analyses_limit": 3,
+        "stripe_customer_id": None,
     }
 
 
-@pytest.fixture
-def mock_admin_user():
-    """Return a mock admin user dict."""
-    return {
-        "id": "test-admin-uuid-1234",
-        "email": "admin@example.com",
-        "role": "authenticated",
-        "user_metadata": {"is_admin": True},
-    }
-
-
-@pytest.fixture
-def auth_headers(mock_user, mocker):
-    """
-    Return auth headers with mocked authentication.
-    
-    This fixture mocks the get_current_user dependency.
-    """
-    from app.core.security import get_current_user
-    
-    async def mock_get_current_user():
-        return mock_user
-    
-    app.dependency_overrides[get_current_user] = mock_get_current_user
-    
-    yield {"Authorization": "Bearer mock-token"}
-    
-    # Cleanup
-    app.dependency_overrides.pop(get_current_user, None)
-
-
-@pytest.fixture
-def admin_headers(mock_admin_user, mocker):
-    """
-    Return auth headers with mocked admin authentication.
-    """
-    from app.core.security import get_current_user, require_admin
-    
-    async def mock_get_current_user():
-        return mock_admin_user
-    
-    def mock_require_admin():
-        return mock_admin_user
-    
-    app.dependency_overrides[get_current_user] = mock_get_current_user
-    app.dependency_overrides[require_admin] = mock_require_admin
-    
-    yield {"Authorization": "Bearer mock-admin-token"}
-    
-    # Cleanup
-    app.dependency_overrides.pop(get_current_user, None)
-    app.dependency_overrides.pop(require_admin, None)
-
-
-# ============================================================================
-# Test helpers
-# ============================================================================
-
-def assert_success_response(response, status_code=200):
-    """Assert that the response is a successful API response."""
-    assert response.status_code == status_code
-    data = response.json()
-    assert data["success"] is True
-    assert "data" in data
-    return data["data"]
-
-
-def assert_error_response(response, status_code, error_code=None):
-    """Assert that the response is an error API response."""
-    assert response.status_code == status_code
-    data = response.json()
-    assert data["success"] is False
-    assert "error" in data
-    if error_code:
-        assert data["error"]["code"] == error_code
-    return data["error"]
+# Test environment check
+def pytest_configure(config):
+    """Ensure we're not running tests against production."""
+    if settings.APP_ENV == "production":
+        raise RuntimeError("Cannot run tests in production environment!")
