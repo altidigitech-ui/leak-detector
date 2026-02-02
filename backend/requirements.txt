@@ -20,7 +20,9 @@ stripe==8.2.0
 
 # LLM
 anthropic==0.18.1
-openai==1.12.0
+
+# Scraping
+playwright==1.41.2
 
 # Monitoring
 sentry-sdk[fastapi]==1.40.0
