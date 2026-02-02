@@ -1,0 +1,215 @@
+-- ============================================================================
+-- LEAK DETECTOR - Seed Data for Development
+-- Run this after schema.sql in development only
+-- ============================================================================
+
+-- ⚠️  DO NOT RUN IN PRODUCTION
+
+-- ============================================
+-- Test User Profile
+-- ============================================
+-- First, create a user in Supabase Auth Dashboard:
+-- Email: test@leakdetector.io
+-- Password: TestPassword123!
+-- 
+-- Then run this to update their profile:
+
+-- UPDATE profiles 
+-- SET 
+--     full_name = 'Test User',
+--     plan = 'pro',
+--     analyses_limit = 50,
+--     analyses_used = 5
+-- WHERE email = 'test@leakdetector.io';
+
+
+-- ============================================
+-- Sample Analyses
+-- Replace 'YOUR_USER_UUID' with actual user ID
+-- ============================================
+
+-- DO $$
+-- DECLARE
+--     v_user_id UUID := 'YOUR_USER_UUID';
+--     v_analysis_id_1 UUID;
+--     v_analysis_id_2 UUID;
+--     v_analysis_id_3 UUID;
+-- BEGIN
+--     -- Analysis 1: Completed
+--     INSERT INTO analyses (user_id, url, status, created_at, started_at, completed_at)
+--     VALUES (v_user_id, 'https://example.com', 'completed', now() - interval '2 hours', now() - interval '2 hours', now() - interval '2 hours')
+--     RETURNING id INTO v_analysis_id_1;
+--     
+--     -- Analysis 2: Completed
+--     INSERT INTO analyses (user_id, url, status, created_at, started_at, completed_at)
+--     VALUES (v_user_id, 'https://stripe.com', 'completed', now() - interval '1 day', now() - interval '1 day', now() - interval '1 day')
+--     RETURNING id INTO v_analysis_id_2;
+--     
+--     -- Analysis 3: Completed
+--     INSERT INTO analyses (user_id, url, status, created_at, started_at, completed_at)
+--     VALUES (v_user_id, 'https://vercel.com', 'completed', now() - interval '3 days', now() - interval '3 days', now() - interval '3 days')
+--     RETURNING id INTO v_analysis_id_3;
+--     
+--     -- Report 1
+--     INSERT INTO reports (analysis_id, score, summary, categories, page_metadata)
+--     VALUES (
+--         v_analysis_id_1,
+--         72,
+--         'Votre landing page a un bon potentiel mais présente 3 problèmes critiques qui impactent votre taux de conversion.',
+--         '[
+--             {
+--                 "name": "headline",
+--                 "label": "Titre principal",
+--                 "score": 85,
+--                 "issues": [
+--                     {
+--                         "severity": "warning",
+--                         "title": "Titre légèrement long",
+--                         "description": "Votre titre fait 14 mots. Les titres les plus efficaces font moins de 10 mots.",
+--                         "recommendation": "Condensez votre proposition de valeur en une phrase plus percutante."
+--                     }
+--                 ]
+--             },
+--             {
+--                 "name": "cta",
+--                 "label": "Call-to-Action",
+--                 "score": 60,
+--                 "issues": [
+--                     {
+--                         "severity": "critical",
+--                         "title": "CTA peu visible",
+--                         "description": "Le contraste de votre bouton principal est de 2.8:1, en dessous du minimum recommandé de 4.5:1.",
+--                         "recommendation": "Utilisez une couleur de bouton qui contraste davantage avec le fond. Essayez un orange vif ou un vert."
+--                     },
+--                     {
+--                         "severity": "warning",
+--                         "title": "Texte CTA générique",
+--                         "description": "\"En savoir plus\" ne communique pas la valeur de l action.",
+--                         "recommendation": "Utilisez un texte orienté bénéfice comme \"Commencer gratuitement\" ou \"Obtenir mon audit\"."
+--                     }
+--                 ]
+--             },
+--             {
+--                 "name": "social_proof",
+--                 "label": "Preuve sociale",
+--                 "score": 45,
+--                 "issues": [
+--                     {
+--                         "severity": "critical",
+--                         "title": "Absence de témoignages",
+--                         "description": "Aucun témoignage client visible sur la page.",
+--                         "recommendation": "Ajoutez 2-3 témoignages avec photo, nom et entreprise de vos clients."
+--                     }
+--                 ]
+--             },
+--             {
+--                 "name": "trust",
+--                 "label": "Confiance",
+--                 "score": 78,
+--                 "issues": [
+--                     {
+--                         "severity": "info",
+--                         "title": "Mentions légales peu visibles",
+--                         "description": "Le lien vers les CGU est en police très petite.",
+--                         "recommendation": "Assurez-vous que les liens légaux sont facilement accessibles."
+--                     }
+--                 ]
+--             },
+--             {
+--                 "name": "speed",
+--                 "label": "Performance",
+--                 "score": 82,
+--                 "issues": [
+--                     {
+--                         "severity": "warning",
+--                         "title": "Images non optimisées",
+--                         "description": "3 images pourraient être compressées pour gagner 450KB.",
+--                         "recommendation": "Utilisez des formats modernes (WebP) et compressez vos images."
+--                     }
+--                 ]
+--             }
+--         ]'::jsonb,
+--         '{"title": "Example - Landing Page", "load_time_ms": 2340, "word_count": 450, "image_count": 8}'::jsonb
+--     );
+--     
+--     -- Report 2
+--     INSERT INTO reports (analysis_id, score, summary, categories, page_metadata)
+--     VALUES (
+--         v_analysis_id_2,
+--         91,
+--         'Excellente landing page ! Quelques optimisations mineures possibles mais l ensemble est très professionnel.',
+--         '[
+--             {
+--                 "name": "headline",
+--                 "label": "Titre principal",
+--                 "score": 95,
+--                 "issues": []
+--             },
+--             {
+--                 "name": "cta",
+--                 "label": "Call-to-Action",
+--                 "score": 90,
+--                 "issues": [
+--                     {
+--                         "severity": "info",
+--                         "title": "CTA secondaire peu différencié",
+--                         "description": "Le CTA secondaire ressemble beaucoup au principal.",
+--                         "recommendation": "Différenciez visuellement les CTAs primaire et secondaire."
+--                     }
+--                 ]
+--             },
+--             {
+--                 "name": "social_proof",
+--                 "label": "Preuve sociale",
+--                 "score": 92,
+--                 "issues": []
+--             }
+--         ]'::jsonb,
+--         '{"title": "Stripe - Payment Infrastructure", "load_time_ms": 1850, "word_count": 620, "image_count": 12}'::jsonb
+--     );
+--     
+--     -- Report 3
+--     INSERT INTO reports (analysis_id, score, summary, categories, page_metadata)
+--     VALUES (
+--         v_analysis_id_3,
+--         88,
+--         'Très bonne landing page avec une proposition de valeur claire. Points d amélioration mineurs sur le mobile.',
+--         '[
+--             {
+--                 "name": "headline",
+--                 "label": "Titre principal",
+--                 "score": 92,
+--                 "issues": []
+--             },
+--             {
+--                 "name": "mobile",
+--                 "label": "Mobile",
+--                 "score": 75,
+--                 "issues": [
+--                     {
+--                         "severity": "warning",
+--                         "title": "Boutons trop petits sur mobile",
+--                         "description": "Certains boutons font moins de 44px de hauteur.",
+--                         "recommendation": "Augmentez la taille des touch targets à minimum 44x44px."
+--                     }
+--                 ]
+--             }
+--         ]'::jsonb,
+--         '{"title": "Vercel - Build and Deploy", "load_time_ms": 1420, "word_count": 380, "image_count": 6}'::jsonb
+--     );
+--     
+-- END $$;
+
+
+-- ============================================
+-- Verify Data
+-- ============================================
+-- SELECT 
+--     a.id,
+--     a.url,
+--     a.status,
+--     r.score,
+--     a.created_at
+-- FROM analyses a
+-- LEFT JOIN reports r ON r.analysis_id = a.id
+-- ORDER BY a.created_at DESC;
