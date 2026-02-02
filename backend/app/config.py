@@ -1,6 +1,7 @@
 """
-Application Configuration
+Application configuration using Pydantic Settings.
 """
+
 from functools import lru_cache
 from typing import List
 
@@ -17,21 +18,22 @@ class Settings(BaseSettings):
     )
     
     # App
-    APP_NAME: str = "My SaaS"
+    APP_NAME: str = "LeakDetector"
     APP_ENV: str = "development"
-    APP_DEBUG: bool = True
-    APP_SECRET_KEY: str = "change-me-in-production"
+    APP_DEBUG: bool = False
+    APP_SECRET_KEY: str
+    
+    # URLs
+    FRONTEND_URL: str = "http://localhost:3000"
+    BACKEND_URL: str = "http://localhost:8000"
     
     # CORS
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "https://localhost:3000",
-    ]
+    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     
     # Supabase
-    SUPABASE_URL: str = ""
-    SUPABASE_ANON_KEY: str = ""
-    SUPABASE_SERVICE_KEY: str = ""
+    SUPABASE_URL: str
+    SUPABASE_ANON_KEY: str
+    SUPABASE_SERVICE_KEY: str
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -39,29 +41,34 @@ class Settings(BaseSettings):
     # Stripe
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
-    STRIPE_PRICE_ID_MONTHLY: str = ""
-    STRIPE_PRICE_ID_YEARLY: str = ""
+    STRIPE_PRICE_PRO_MONTHLY: str = ""
+    STRIPE_PRICE_AGENCY_MONTHLY: str = ""
     
-    # LLM
+    # Anthropic
     ANTHROPIC_API_KEY: str = ""
-    OPENAI_API_KEY: str = ""
+    ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"
+    
+    # Playwright
+    PLAYWRIGHT_TIMEOUT: int = 30000
     
     # Monitoring
     SENTRY_DSN: str = ""
-    LANGSMITH_API_KEY: str = ""
+    
+    # Quotas
+    QUOTA_FREE: int = 3
+    QUOTA_PRO: int = 50
+    QUOTA_AGENCY: int = 200
     
     @property
     def is_production(self) -> bool:
-        """Check if running in production."""
         return self.APP_ENV == "production"
     
     @property
     def is_development(self) -> bool:
-        """Check if running in development."""
         return self.APP_ENV == "development"
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()
