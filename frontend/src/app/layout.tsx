@@ -1,36 +1,14 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { Toaster } from 'sonner';
-
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: {
-    default: 'My SaaS',
-    template: '%s | My SaaS',
-  },
-  description: 'Description of your SaaS product',
-  keywords: ['saas', 'product', 'keywords'],
-  authors: [{ name: 'Your Name' }],
-  openGraph: {
-    title: 'My SaaS',
-    description: 'Description of your SaaS product',
-    url: 'https://example.com',
-    siteName: 'My SaaS',
-    locale: 'en_US',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'My SaaS',
-    description: 'Description of your SaaS product',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  title: 'Leak Detector - Find Conversion Leaks in Your Landing Pages',
+  description:
+    'Identify in 30 seconds what makes visitors leave your landing page. Get actionable recommendations to improve your conversion rate.',
+  keywords: ['landing page', 'conversion', 'CRO', 'optimization', 'analysis'],
 };
 
 export default function RootLayout({
@@ -39,15 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        {children}
-        <Toaster 
-          position="top-right"
-          richColors
-          closeButton
-        />
-      </body>
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
