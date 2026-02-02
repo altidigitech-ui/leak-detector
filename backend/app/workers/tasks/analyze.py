@@ -47,9 +47,7 @@ def analyze_page_task(self, analysis_id: str) -> Dict[str, Any]:
     logger.info("task_started", analysis_id=analysis_id, task_id=self.request.id)
     
     # Run async code in sync context
-    return asyncio.get_event_loop().run_until_complete(
-        _analyze_page_async(self, analysis_id)
-    )
+    return asyncio.run(_analyze_page_async(self, analysis_id))
 
 
 async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
