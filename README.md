@@ -1,33 +1,67 @@
-# SaaS Templates 🚀
+# Leak Detector 🔍
 
-> Boilerplate complet pour lancer un SaaS en 2 semaines.
-
-## Contenu
-
-| Dossier | Description |
-|---------|-------------|
-| `docs-templates/` | 18 templates de documentation |
-| `backend-starter/` | FastAPI + Celery + Supabase |
-| `frontend-starter/` | Next.js 14 + TypeScript + Tailwind |
-| `legal-templates/` | CGU + Privacy (FR/EN) |
-| `stripe-templates/` | Webhooks + guide setup |
-| `deploy-configs/` | Vercel, Railway, GitHub Actions |
+> Identifiez en 30 secondes les éléments de votre landing page qui font fuir vos visiteurs.
 
 ## Quick Start
 
-### Option 1 : Script automatique
+### Prerequisites
+- Python 3.12+
+- Node.js 20+
+- Redis
+- Supabase account
+- Anthropic API key
+
+### 1. Database Setup
+
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Run the schema in SQL Editor:
+   ```bash
+   # Copy content from database/schema.sql
+   ```
+
+### 2. Backend
 
 ```bash
-chmod +x scripts/new-project.sh
-./scripts/new-project.sh mon-projet
-cd mon-projet
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+playwright install chromium
+
+cp .env.example .env
+# Edit .env with your values
+
+uvicorn app.main:app --reload
 ```
 
-### Option 2 : Manuel
+### 3. Frontend
 
-1. Copier les dossiers `backend-starter/` et `frontend-starter/`
-2. Renommer les `.template.md` en `.md` dans `docs-templates/`
-3. Configurer les `.env` files
+```bash
+cd frontend
+npm install
+
+cp .env.example .env.local
+# Edit .env.local with your values
+
+npm run dev
+```
+
+### 4. Celery Worker
+
+```bash
+cd backend
+celery -A app.workers.celery worker --loglevel=info
+```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [context.md](./context.md) | Vision, business model, décisions |
+| [CLAUDE.md](./CLAUDE.md) | Instructions Claude Code |
+| [docs/SPEC.md](./docs/SPEC.md) | Spécifications fonctionnelles |
+| [docs/ARCH.md](./docs/ARCH.md) | Architecture technique + DB schema |
+| [docs/TASKS.md](./docs/TASKS.md) | Tâches et avancement |
 
 ## Stack
 
@@ -36,58 +70,66 @@ cd mon-projet
 | Backend | FastAPI + Python 3.12 |
 | Frontend | Next.js 14 + TypeScript |
 | Database | Supabase PostgreSQL |
-| Auth | Supabase Auth |
 | Queue | Celery + Redis |
+| LLM | Claude API (Sonnet) |
+| Scraping | Playwright |
 | Payments | Stripe |
-| Deploy | Railway + Vercel |
+| Hosting | Railway (backend) + Vercel (frontend) |
 
-## Templates Documentation
-
-| Template | Usage |
-|----------|-------|
-| CLAUDE.md | Instructions pour Claude Code |
-| context.md | Vision, personas, business model |
-| SPEC.md | Spécifications fonctionnelles |
-| ARCH.md | Architecture technique + DB schema |
-| UI.md | Design system, composants |
-| COPY.md | Tous les textes de l'app |
-| ERRORS.md | Catalogue des erreurs |
-| SECURITY.md | Checklist sécurité |
-| TESTS.md | Stratégie de tests |
-| DEPLOY.md | Configuration déploiement |
-| ANALYTICS.md | Events tracking |
-| MONITORING.md | Alertes et runbooks |
-| MIGRATIONS.md | Stratégie migrations DB |
-| BACKUP.md | Backup et restore |
-| API.md | Documentation API |
-| TASKS.md | Gestion des tâches |
-| CHANGELOG.md | Historique versions |
-| ROADMAP.md | Évolutions futures |
-
-## Structure Projet Généré
+## Project Structure
 
 ```
-mon-projet/
-├── CLAUDE.md
-├── context.md
+leak-detector/
+├── CLAUDE.md              # Claude Code instructions
+├── context.md             # Project context & business
 ├── README.md
+├── .gitignore
+│
 ├── docs/
-│   ├── SPEC.md
-│   ├── ARCH.md
-│   └── ...
+│   ├── SPEC.md            # Functional specifications
+│   ├── ARCH.md            # Architecture & DB schema
+│   └── TASKS.md           # Task tracking
+│
+├── database/
+│   ├── schema.sql         # Supabase schema
+│   └── seed.sql           # Dev seed data
+│
 ├── backend/
 │   ├── app/
-│   ├── tests/
+│   │   ├── api/v1/endpoints/   # API routes
+│   │   ├── services/           # Business logic
+│   │   ├── workers/tasks/      # Celery tasks
+│   │   └── ...
 │   ├── requirements.txt
-│   └── Dockerfile
+│   ├── Dockerfile
+│   └── railway.toml
+│
 ├── frontend/
 │   ├── src/
+│   │   ├── app/           # Next.js pages
+│   │   ├── components/    # React components
+│   │   └── lib/           # Utils & clients
 │   ├── package.json
-│   └── ...
+│   └── vercel.json
+│
 └── .github/
     └── workflows/
+        └── ci.yml         # CI/CD pipeline
 ```
+
+## Deployment
+
+### Backend (Railway)
+1. Connect repo to Railway
+2. Set environment variables from `.env.example`
+3. Deploy
+
+### Frontend (Vercel)
+1. Connect repo to Vercel
+2. Set root directory to `frontend`
+3. Set environment variables from `.env.example`
+4. Deploy
 
 ## License
 
-MIT - AltiDigitech
+Proprietary - AltiDigitech
