@@ -40,11 +40,10 @@ Le token est obtenu via Supabase Auth (login email/password ou OAuth).
 {
   "success": true,
   "data": [ ... ],
-  "pagination": {
-    "total": 42,
-    "page": 1,
-    "per_page": 20,
-    "pages": 3
+  "meta": {
+    "limit": 20,
+    "offset": 0,
+    "total": 42
   }
 }
 ```
@@ -78,37 +77,6 @@ Status du service. Pas d'authentification requise.
   "service": "leak-detector-api"
 }
 ```
-
-#### GET /health/deep
-
-Status détaillé avec vérification des dépendances.
-
-**Response 200**
-```json
-{
-  "status": "healthy",
-  "checks": {
-    "database": "ok",
-    "redis": "ok",
-    "celery": "ok"
-  },
-  "timestamp": "2026-02-02T10:00:00Z"
-}
-```
-
-**Response 200 (dégradé)**
-```json
-{
-  "status": "degraded",
-  "checks": {
-    "database": "ok",
-    "redis": "error: Connection refused",
-    "celery": "no workers"
-  }
-}
-```
-
----
 
 ### Analyses
 
@@ -151,17 +119,18 @@ Créer une nouvelle analyse. Authentification requise. Vérifie le quota.
 
 Lister les analyses de l'utilisateur. Authentification requise.
 
+<!-- TODO: implémenter filtre par status -->
+
 **Query Parameters**
 
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
-| page | int | 1 | Numéro de page |
-| per_page | int | 20 | Résultats par page (max 100) |
-| status | string | - | Filtrer par status |
+| limit | int | 20 | Nombre de résultats (max 100) |
+| offset | int | 0 | Décalage pour la pagination |
 
 **Request**
 ```
-GET /analyses?page=1&per_page=10&status=completed
+GET /analyses?limit=10&offset=0
 ```
 
 **Response 200**
@@ -177,11 +146,10 @@ GET /analyses?page=1&per_page=10&status=completed
       "completed_at": "2026-02-02T10:00:32Z"
     }
   ],
-  "pagination": {
-    "total": 15,
-    "page": 1,
-    "per_page": 10,
-    "pages": 2
+  "meta": {
+    "limit": 10,
+    "offset": 0,
+    "total": 15
   }
 }
 ```
@@ -266,8 +234,8 @@ Lister les rapports de l'utilisateur.
 
 | Param | Type | Default | Description |
 |-------|------|---------|-------------|
-| page | int | 1 | Numéro de page |
-| per_page | int | 20 | Résultats par page |
+| limit | int | 20 | Nombre de résultats |
+| offset | int | 0 | Décalage pour la pagination |
 
 **Response 200**
 ```json
@@ -280,15 +248,13 @@ Lister les rapports de l'utilisateur.
       "url": "https://example.com/landing",
       "score": 72,
       "summary": "Good foundation with 3 critical issues to address.",
-      "screenshot_url": "https://xxx.supabase.co/storage/v1/object/public/screenshots/xxx.png",
       "created_at": "2026-02-02T10:00:32Z"
     }
   ],
-  "pagination": {
-    "total": 8,
-    "page": 1,
-    "per_page": 20,
-    "pages": 1
+  "meta": {
+    "limit": 20,
+    "offset": 0,
+    "total": 8
   }
 }
 ```
@@ -402,6 +368,66 @@ Récupérer un rapport complet avec catégories et issues.
         ]
       }
     ]
+  }
+}
+```
+
+---
+
+#### GET /reports/by-analysis/{analysis_id}
+
+Récupérer un rapport via l'ID de l'analyse. Utile après le polling de l'analyse.
+
+**Response 200**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "660e8400-e29b-41d4-a716-446655440000",
+    "analysis_id": "550e8400-e29b-41d4-a716-446655440000",
+    "url": "https://example.com/landing",
+    "score": 72,
+    "summary": "Good foundation with 3 critical issues to address.",
+    "screenshot_url": "https://xxx.supabase.co/storage/v1/...",
+    "created_at": "2026-02-02T10:00:32Z",
+    "categories": [
+      {
+        "name": "headline",
+        "label": "Headline",
+        "score": 85,
+        "issues": []
+      },
+      {
+        "name": "cta",
+        "label": "Call-to-Action",
+        "score": 45,
+        "issues": [
+          {
+            "severity": "critical",
+            "title": "Low contrast CTA button",
+            "description": "The main call-to-action button has insufficient contrast against the background.",
+            "recommendation": "Use a high-contrast color like #2563EB on white background."
+          }
+        ]
+      }
+    ],
+    "page_metadata": {
+      "title": "Example Landing Page",
+      "load_time_ms": 2340,
+      "word_count": 450,
+      "image_count": 6
+    }
+  }
+}
+```
+
+**Response 404**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Report not found"
   }
 }
 ```
@@ -574,8 +600,8 @@ class LeakDetectorAPI {
     return this.request(`/analyses/${id}`);
   }
 
-  async listAnalyses(page = 1, perPage = 20) {
-    return this.request(`/analyses?page=${page}&per_page=${perPage}`);
+  async listAnalyses(limit = 20, offset = 0) {
+    return this.request(`/analyses?limit=${limit}&offset=${offset}`);
   }
 
   // Reports
@@ -583,8 +609,8 @@ class LeakDetectorAPI {
     return this.request(`/reports/${id}`);
   }
 
-  async listReports(page = 1, perPage = 20) {
-    return this.request(`/reports?page=${page}&per_page=${perPage}`);
+  async listReports(limit = 20, offset = 0) {
+    return this.request(`/reports?limit=${limit}&offset=${offset}`);
   }
 
   // Polling helper

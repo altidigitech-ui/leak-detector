@@ -7,139 +7,139 @@
 ## Phase 1 — Setup & Infrastructure (J+2)
 
 ### Backend
-- [ ] 🔴 Init repo avec structure
-- [ ] 🔴 Configurer Supabase (projet + tables)
-- [ ] 🔴 Configurer Railway (backend + Redis)
-- [ ] 🔴 Variables d'environnement
-- [ ] 🔴 Health check endpoint
-- [ ] 🟡 Sentry monitoring
+- [x] 🔴 Init repo avec structure
+- [x] 🔴 Configurer Supabase (projet + tables)
+- [x] 🔴 Configurer Railway (backend + Redis)
+- [x] 🔴 Variables d'environnement
+- [x] 🔴 Health check endpoint
+- [x] 🟡 Sentry monitoring
 
 ### Frontend
-- [ ] 🔴 Init Next.js
-- [ ] 🔴 Configurer Vercel
-- [ ] 🔴 Setup Supabase Auth client
-- [ ] 🔴 Layout de base (header, sidebar)
+- [x] 🔴 Init Next.js
+- [x] 🔴 Configurer Vercel
+- [x] 🔴 Setup Supabase Auth client
+- [x] 🔴 Layout de base (header, sidebar)
 
 ### Database
-- [ ] 🔴 Table `profiles` (extension Supabase Auth)
-- [ ] 🔴 Table `analyses`
-- [ ] 🔴 Table `reports`
-- [ ] 🔴 RLS policies
-- [ ] 🟡 Indexes
+- [x] 🔴 Table `profiles` (extension Supabase Auth)
+- [x] 🔴 Table `analyses`
+- [x] 🔴 Table `reports`
+- [x] 🔴 RLS policies
+- [x] 🟡 Indexes
 
 ---
 
 ## Phase 2 — Core Analysis (J+5)
 
 ### Scraping Service
-- [ ] 🔴 Setup Playwright dans worker
-- [ ] 🔴 Fonction scrape_page(url) → HTML + metadata
-- [ ] 🔴 Capture screenshot
-- [ ] 🔴 Gestion timeout (30s max)
-- [ ] 🔴 Gestion erreurs (404, timeout, blocked)
-- [ ] 🟡 Headers réalistes (User-Agent, etc.)
+- [x] 🔴 Setup Playwright dans worker
+- [x] 🔴 Fonction scrape_page(url) → HTML + metadata
+- [x] 🔴 Capture screenshot
+- [x] 🔴 Gestion timeout (30s max)
+- [x] 🔴 Gestion erreurs (404, timeout, blocked)
+- [x] 🟡 Headers réalistes (User-Agent, etc.)
 
 ### Analysis Service
-- [ ] 🔴 Prompt engineering pour analyse CRO
-- [ ] 🔴 Fonction analyze(html, screenshot) → Report
-- [ ] 🔴 Parsing réponse Claude → structure JSON
-- [ ] 🔴 Calcul scores par catégorie
-- [ ] 🟡 Fallback si parsing échoue
+- [x] 🔴 Prompt engineering pour analyse CRO
+- [x] 🔴 Fonction analyze(html, screenshot) → Report
+- [x] 🔴 Parsing réponse Claude → structure JSON
+- [x] 🔴 Calcul scores par catégorie
+- [x] 🟡 Fallback si parsing échoue
 
 ### Worker Celery
-- [ ] 🔴 Task analyze_page(analysis_id)
-- [ ] 🔴 Update status (pending → processing → completed/failed)
-- [ ] 🔴 Store result dans Supabase
-- [ ] 🔴 Retry logic (max 2 retries)
-- [ ] 🟡 Dead letter queue
+- [x] 🔴 Task analyze_page(analysis_id)
+- [x] 🔴 Update status (pending → processing → completed/failed)
+- [x] 🔴 Store result dans Supabase
+- [x] 🔴 Retry logic (max 2 retries)
+- [x] 🟡 Dead letter queue
 
 ### API Endpoints
-- [ ] 🔴 POST /analyses - Créer analyse
-- [ ] 🔴 GET /analyses/{id} - Status analyse
-- [ ] 🔴 GET /reports/{id} - Récupérer rapport
+- [x] 🔴 POST /analyses - Créer analyse
+- [x] 🔴 GET /analyses/{id} - Status analyse
+- [x] 🔴 GET /reports/{id} - Récupérer rapport
 
 ---
 
 ## Phase 3 — MVP UI (J+8)
 
 ### Pages Auth
-- [ ] 🔴 Page /login
-- [ ] 🔴 Page /register
+- [x] 🔴 Page /login
+- [x] 🔴 Page /register
 - [ ] 🔴 Page /forgot-password
-- [ ] 🔴 Middleware protection routes
+- [x] 🔴 Middleware protection routes
 
 ### Dashboard
-- [ ] 🔴 Page /dashboard
-- [ ] 🔴 Stats cards (analyses, score moyen, quota)
-- [ ] 🔴 Liste analyses récentes
-- [ ] 🔴 Empty state si nouveau user
+- [x] 🔴 Page /dashboard
+- [x] 🔴 Stats cards (analyses, score moyen, quota)
+- [x] 🔴 Liste analyses récentes
+- [x] 🔴 Empty state si nouveau user
 
 ### Analyse
-- [ ] 🔴 Page /analyze
-- [ ] 🔴 Formulaire URL
-- [ ] 🔴 Validation URL côté client
-- [ ] 🔴 État loading avec progress
-- [ ] 🔴 Polling status analyse
-- [ ] 🔴 Redirection vers rapport
+- [x] 🔴 Page /analyze
+- [x] 🔴 Formulaire URL
+- [x] 🔴 Validation URL côté client
+- [x] 🔴 État loading avec progress
+- [x] 🔴 Polling status analyse
+- [x] 🔴 Redirection vers rapport
 
 ### Rapports
-- [ ] 🔴 Page /reports (liste)
-- [ ] 🔴 Page /reports/[id] (détail)
-- [ ] 🔴 Score global avec jauge
-- [ ] 🔴 Cards par catégorie
-- [ ] 🔴 Liste issues avec sévérité
-- [ ] 🔴 Screenshot de la page
-- [ ] 🟡 Bouton partage
+- [x] 🔴 Page /reports (liste)
+- [x] 🔴 Page /reports/[id] (détail)
+- [x] 🔴 Score global avec jauge
+- [x] 🔴 Cards par catégorie
+- [x] 🔴 Liste issues avec sévérité
+- [x] 🔴 Screenshot de la page
+- [x] 🟡 Bouton partage
 
 ---
 
 ## Phase 4 — Payment (J+10)
 
 ### Stripe Setup
-- [ ] 🔴 Créer produits (Pro, Agency)
-- [ ] 🔴 Configurer webhook endpoint
-- [ ] 🔴 Configurer Customer Portal
+- [x] 🔴 Créer produits (Pro, Agency)
+- [x] 🔴 Configurer webhook endpoint
+- [x] 🔴 Configurer Customer Portal
 
 ### Backend
-- [ ] 🔴 POST /billing/checkout
-- [ ] 🔴 POST /billing/portal
-- [ ] 🔴 Webhook handler (tous events)
-- [ ] 🔴 Update subscription status en DB
+- [x] 🔴 POST /billing/checkout
+- [x] 🔴 POST /billing/portal
+- [x] 🔴 Webhook handler (tous events)
+- [x] 🔴 Update subscription status en DB
 
 ### Frontend
-- [ ] 🔴 Page /pricing
-- [ ] 🔴 Page /settings/billing
-- [ ] 🔴 Bouton upgrade
-- [ ] 🔴 Affichage plan actuel
+- [x] 🔴 Page /pricing
+- [x] 🔴 Page /settings/billing
+- [x] 🔴 Bouton upgrade
+- [x] 🔴 Affichage plan actuel
 
 ### Quotas
-- [ ] 🔴 Check quota avant analyse
-- [ ] 🔴 Décrémentation après analyse
-- [ ] 🔴 Reset mensuel (cron ou trigger)
-- [ ] 🔴 Modal "quota dépassé"
+- [x] 🔴 Check quota avant analyse
+- [x] 🔴 Décrémentation après analyse
+- [x] 🔴 Reset mensuel (cron ou trigger)
+- [x] 🔴 Modal "quota dépassé"
 
 ---
 
 ## Phase 5 — Polish (J+12)
 
 ### Landing Page
-- [ ] 🔴 Hero section
-- [ ] 🔴 Features section
-- [ ] 🔴 How it works
-- [ ] 🔴 Pricing section
+- [x] 🔴 Hero section
+- [x] 🔴 Features section
+- [x] 🔴 How it works
+- [x] 🔴 Pricing section
 - [ ] 🔴 FAQ
-- [ ] 🔴 Footer
+- [x] 🔴 Footer
 - [ ] 🟡 Animations
 
 ### UX
-- [ ] 🔴 Loading states partout
+- [x] 🔴 Loading states partout
 - [ ] 🔴 Error states partout
-- [ ] 🔴 Empty states partout
+- [x] 🔴 Empty states partout
 - [ ] 🔴 Toasts notifications
 - [ ] 🟡 Onboarding first-time user
 
 ### SEO & Meta
-- [ ] 🔴 Meta tags toutes pages
+- [x] 🔴 Meta tags toutes pages
 - [ ] 🔴 OG images
 - [ ] 🔴 Favicon
 - [ ] 🟡 Sitemap
@@ -203,3 +203,10 @@
 - Création repo et documentation initiale
 - Stack validé : FastAPI + Next.js + Supabase + Claude API
 - Prochaine étape : Phase 1 Setup
+
+### 2026-02-03
+- 85 fichiers livrés (backend complet, frontend complet, DB schema)
+- 7 bugs critiques corrigés (imports, error handlers, RPC, asyncio, middleware, env vars, types)
+- CLAUDE.md reécrit pour refléter l'état réel du codebase
+- Docs corrigées (API.md, TASKS.md, TESTS.md, DEPLOY.md)
+- Prochaine étape : features Roadmap Phase 2

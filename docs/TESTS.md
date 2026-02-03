@@ -184,22 +184,22 @@ class TestAnalyzePage:
 # tests/unit/test_scraper.py
 
 import pytest
-from app.services.scraper import summarize_html, validate_url
+from app.services.scraper import summarize_html
 
 class TestSummarizeHtml:
     """Tests pour la simplification HTML."""
-    
+
     def test_removes_script_tags(self):
         html = "<html><script>alert('x')</script><p>Hello</p></html>"
         result = summarize_html(html)
         assert "<script>" not in result
         assert "Hello" in result
-    
+
     def test_removes_style_tags(self):
         html = "<html><style>body{color:red}</style><p>Hello</p></html>"
         result = summarize_html(html)
         assert "<style>" not in result
-    
+
     def test_truncates_long_html(self):
         html = "<p>" + "a" * 10000 + "</p>"
         result = summarize_html(html, max_length=100)
@@ -207,26 +207,9 @@ class TestSummarizeHtml:
         assert "[truncated]" in result
 
 
-class TestValidateUrl:
-    """Tests pour la validation d'URL."""
-    
-    def test_valid_https_url(self):
-        assert validate_url("https://example.com") == True
-    
-    def test_valid_http_url(self):
-        assert validate_url("http://example.com") == True
-    
-    def test_localhost_blocked(self):
-        with pytest.raises(ValidationError):
-            validate_url("http://localhost:3000")
-    
-    def test_private_ip_blocked(self):
-        with pytest.raises(ValidationError):
-            validate_url("http://192.168.1.1")
-    
-    def test_file_protocol_blocked(self):
-        with pytest.raises(ValidationError):
-            validate_url("file:///etc/passwd")
+# TODO: implémenter validate_url() dans scraper.py
+# Doit bloquer : localhost, IPs privées (192.168.x.x, 10.x.x.x, 127.x.x.x), protocoles non-HTTP
+# Voir docs/SECURITY.md section SSRF pour les specs complètes
 ```
 
 ---
