@@ -20,11 +20,12 @@ Lire `context.md` pour la vision business, les personas, le pricing et les unit 
 | Backend | FastAPI + Python 3.12 | `backend/app/main.py` entry point |
 | Frontend | Next.js 14 App Router + TypeScript | `frontend/src/app/` |
 | Database | Supabase PostgreSQL | Schema dans `database/schema.sql` |
-| Auth | Supabase Auth (email + Google OAuth) | JWT, RLS activé |
+| Auth | Supabase Auth (email + Google OAuth) | JWT vérifié avec SUPABASE_JWT_SECRET, RLS activé |
 | Queue | Celery + Redis | Worker dans `backend/app/workers/` |
-| LLM | Anthropic Claude API | Sonnet, prompt dans `services/analyzer.py` |
+| LLM | Anthropic Claude API | `claude-sonnet-4-5-20250929`, prompt dans `services/analyzer.py` |
 | Scraping | Playwright (headless Chromium) | `services/scraper.py` |
 | Payments | Stripe (Checkout + Customer Portal) | Webhooks dans `endpoints/webhooks.py` |
+| Rate Limiting | SlowAPI | Middleware dans `main.py` |
 | Hosting | Railway (backend) + Vercel (frontend) | |
 | Monitoring | Sentry + structlog | JSON en prod, console en dev |
 
@@ -38,7 +39,6 @@ leak-detector/
 ├── README.md
 ├── context.md                         # Vision, business model, personas
 ├── .gitignore
-├── .github/workflows/ci.yml           # CI GitHub Actions
 │
 ├── database/
 │   ├── schema.sql                     # Tables, RLS, triggers, fonctions RPC
@@ -47,7 +47,7 @@ leak-detector/
 ├── docs/
 │   ├── SPEC.md                        # Spécifications fonctionnelles
 │   ├── ARCH.md                        # Architecture technique détaillée
-│   ├── TASKS.md                       # Tâches en cours
+│   ├── TASKS.md                       # ⚡ TÂCHES DE PRODUCTION — LIRE EN PREMIER
 │   ├── API.md                         # Référence API REST
 │   ├── UI.md                          # Design system (couleurs, typo, composants)
 │   ├── COPY.md                        # Textes de l'application
@@ -68,8 +68,8 @@ leak-detector/
 │   ├── Dockerfile
 │   ├── railway.toml
 │   ├── app/
-│   │   ├── main.py                    # FastAPI app, CORS, lifespan, error handlers
-│   │   ├── config.py                  # Pydantic Settings (env vars)
+│   │   ├── main.py                    # FastAPI app, CORS, SlowAPI rate limiting, error handlers
+│   │   ├── config.py                  # Pydantic Settings (env vars incl. SUPABASE_JWT_SECRET)
 │   │   ├── api/
 │   │   │   ├── deps.py               # DI: CurrentUserID, Supabase (Annotated)
 │   │   │   └── v1/
@@ -82,7 +82,7 @@ leak-detector/
 │   │   ├── core/
 │   │   │   ├── errors.py             # AppError + sous-classes + exception handlers
 │   │   │   ├── logging.py            # structlog config (JSON prod, console dev)
-│   │   │   └── security.py           # JWT decode, get_current_user_id, Stripe sig verify
+│   │   │   └── security.py           # JWT verification (SUPABASE_JWT_SECRET), Stripe sig verify
 │   │   ├── schemas/
 │   │   │   └── common.py             # Schemas Pydantic partagés
 │   │   ├── models/                    # (vide — pas d'ORM, accès via SupabaseService)
@@ -96,7 +96,9 @@ leak-detector/
 │   │           └── analyze.py         # Task principale: scrape → analyze → store
 │   └── tests/
 │       ├── conftest.py               # Fixtures pytest
-│       └── (tests à écrire)
+│       ├── test_analyzer.py          # Tests parsing + validation
+│       ├── test_endpoints.py         # Tests API (health, auth)
+│       └── test_webhooks.py          # Tests Stripe webhook helpers
 │
 └── frontend/
     ├── .env.example
@@ -108,15 +110,21 @@ leak-detector/
     ├── vercel.json
     └── src/
         ├── app/
-        │   ├── layout.tsx             # Root layout (font, metadata)
+        │   ├── layout.tsx             # Root layout (font, metadata, ToastProvider)
         │   ├── globals.css            # Tailwind + classes utilitaires (btn-primary, card, etc.)
         │   ├── page.tsx               # Landing page marketing
+        │   ├── sitemap.ts             # Next.js sitemap generation
+        │   ├── robots.ts              # Next.js robots.txt
         │   ├── auth/callback/route.ts # OAuth callback handler
         │   ├── (marketing)/
-        │   │   └── pricing/page.tsx   # Page pricing (3 plans)
+        │   │   ├── pricing/page.tsx   # Page pricing (3 plans) + FAQ
+        │   │   ├── terms/page.tsx     # Terms of Service
+        │   │   └── privacy/page.tsx   # Privacy Policy
         │   ├── (auth)/
         │   │   ├── login/page.tsx     # Login email + Google
-        │   │   └── register/page.tsx  # Register email + Google
+        │   │   ├── register/page.tsx  # Register email + Google
+        │   │   ├── forgot-password/page.tsx  # Demande reset email
+        │   │   └── reset-password/page.tsx   # Nouveau mot de passe
         │   └── (dashboard)/
         │       ├── layout.tsx         # Dashboard layout (sidebar/header)
         │       ├── dashboard/page.tsx # Vue d'ensemble
@@ -125,19 +133,20 @@ leak-detector/
         │       ├── reports/[id]/page.tsx # Détail rapport (SSR)
         │       └── settings/page.tsx  # Profil + billing
         ├── components/
-        │   ├── ui/                    # Primitives: button, card, input, score-circle, spinner
-        │   └── shared/               # empty-state, loading
+        │   ├── ui/                    # Primitives: button, card, input, score-circle, spinner, toast
+        │   └── shared/               # empty-state, loading, error-state
         ├── hooks/
-        │   └── use-auth.ts           # Auth state + signIn/signUp/signOut/Google
+        │   ├── use-auth.ts           # Auth state + signIn/signUp/signOut/Google
+        │   └── use-toast.ts          # Toast notifications hook + context
         ├── lib/
-        │   ├── api.ts                # ApiClient class (fetch wrapper avec auth)
+        │   ├── api.ts                # ApiClient class (typed, no `any`)
         │   ├── utils.ts              # Helpers (cn, formatDate, etc.)
         │   └── supabase/
         │       ├── client.ts          # createClient() — browser (createBrowserClient)
         │       └── server.ts          # createClient() — server (createServerClient)
         ├── middleware.ts              # Auth guard: protège /dashboard, /settings, /analyze, /reports
         └── types/
-            └── index.ts              # Types globaux (Profile, Plan, ApiResponse, etc.)
+            └── index.ts              # Types complets: Analysis, Report, Category, Issue, etc.
 ```
 
 ---
@@ -171,10 +180,12 @@ async def create_xxx(self, ...) -> Dict[str, Any]:
 
 ### 4. Frontend
 ```typescript
-// 1. Ajouter méthode dans lib/api.ts
-// 2. Créer la page dans app/(dashboard)/xxx/page.tsx
-// 3. Si route protégée, elle l'est déjà via le group (dashboard)
-// 4. Utiliser les classes CSS existantes : btn-primary, btn-secondary, card, input
+// 1. Ajouter les types dans types/index.ts
+// 2. Ajouter la méthode typée dans lib/api.ts
+// 3. Créer la page dans app/(dashboard)/xxx/page.tsx
+// 4. Si route protégée, elle l'est déjà via le group (dashboard)
+// 5. Utiliser les classes CSS existantes : btn-primary, btn-secondary, card, input
+// 6. Utiliser useToast() pour les feedbacks (succès, erreurs)
 ```
 
 ---
@@ -197,6 +208,17 @@ async def get_xxx(user_id: CurrentUserID, supabase: Supabase):
 from app.core.errors import NotFoundError, QuotaExceededError, ValidationError
 raise NotFoundError("Report")  # → 404 JSON structuré
 ```
+
+**Classes d'erreur disponibles** :
+- `ValidationError(message, details?)` → 400
+- `AuthenticationError(message?)` → 401
+- `AuthorizationError(message?)` → 403
+- `NotFoundError(resource?)` → 404
+- `QuotaExceededError(limit, plan)` → 403
+- `ScrapingError(message, details?)` → 400
+- `AnalysisError(message, details?)` → 500
+- `RateLimitError(retry_after?)` → 429
+- `StripeError(message, details?)` → 400
 
 **Logging** — structlog, event-based :
 ```python
@@ -248,6 +270,15 @@ const result = await apiClient.createAnalysis(url);
 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/...`, {
   headers: { Authorization: `Bearer ${token}` },
 });
+```
+
+**Toast notifications** — Hook `useToast()` :
+```typescript
+import { useToast } from '@/hooks/use-toast';
+
+const { toast } = useToast();
+toast({ type: 'success', message: 'Changes saved!' });
+toast({ type: 'error', message: 'Something went wrong.' });
 ```
 
 **CSS classes utilitaires** définies dans `globals.css` :
@@ -370,6 +401,7 @@ CORS_ORIGINS=http://localhost:3000
 SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_KEY=eyJ...    # Service role key (bypass RLS)
+SUPABASE_JWT_SECRET=            # Dashboard → Settings → API → JWT Secret
 
 REDIS_URL=redis://localhost:6379/0
 
@@ -442,6 +474,7 @@ npm run lint
 7. **Pas de commit de .env** — Gitignore strict
 8. **Pas de fichiers de schemas séparés** — Les schemas Pydantic sont définis dans chaque fichier endpoint (convention actuelle)
 9. **Pas de migration auto** — SQL manuel versionné (voir docs/MIGRATIONS.md)
+10. **Pas de librairie UI externe** — Composants custom uniquement (pas de shadcn, radix, etc.)
 
 ---
 
@@ -450,6 +483,7 @@ npm run lint
 | Doc | Quand la lire |
 |-----|---------------|
 | `context.md` | Pour comprendre le "pourquoi" business |
+| `docs/TASKS.md` | **LIRE EN PREMIER** — Tâches de production à exécuter |
 | `docs/SPEC.md` | Avant d'implémenter une feature |
 | `docs/ARCH.md` | Pour comprendre l'architecture globale |
 | `docs/API.md` | Pour les contrats d'API |
@@ -459,7 +493,6 @@ npm run lint
 | `docs/SECURITY.md` | Avant de toucher à l'auth ou aux données |
 | `docs/DEPLOY.md` | Pour déployer en prod/staging |
 | `docs/ROADMAP.md` | Pour les prochaines features planifiées |
-| `docs/TASKS.md` | Pour l'état d'avancement actuel |
 
 ---
 
@@ -468,9 +501,9 @@ npm run lint
 ### Avant d'écrire du code
 
 1. Lire cette CLAUDE.md (déjà fait)
-2. Si feature : lire `docs/SPEC.md` + `docs/ROADMAP.md`
-3. Si bug : identifier le fichier exact dans la structure ci-dessus
-4. Vérifier `docs/TASKS.md` pour l'état actuel
+2. Lire `docs/TASKS.md` pour les tâches en cours
+3. Si feature : lire `docs/SPEC.md` + `docs/ROADMAP.md`
+4. Si bug : identifier le fichier exact dans la structure ci-dessus
 5. Si ambiguïté : demander clarification
 
 ### Pendant le code
@@ -479,12 +512,13 @@ npm run lint
 2. Type hints Python, types TypeScript — toujours
 3. Error handling explicite — jamais de try/except vide
 4. Logger les événements importants en key=value
+5. Utiliser les classes AppError, JAMAIS HTTPException
 
 ### Après le code
 
-1. Mettre à jour `docs/TASKS.md` si nécessaire
+1. Cocher la tâche dans `docs/TASKS.md`
 2. Mettre à jour `docs/CHANGELOG.md` pour les features significatives
-3. Proposer les tests si pertinent 
+3. Vérifier que les tests passent si pertinent
 
 ---
 
