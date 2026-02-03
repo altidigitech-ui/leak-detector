@@ -484,7 +484,7 @@ npm run lint
 
 1. Mettre à jour `docs/TASKS.md` si nécessaire
 2. Mettre à jour `docs/CHANGELOG.md` pour les features significatives
-3. Proposer les tests si pertinent
+3. Proposer les tests si pertinent 
 
 ---
 
