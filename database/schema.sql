@@ -295,6 +295,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Fonction: Incrémenter le compteur d'analyses utilisées
+CREATE OR REPLACE FUNCTION public.increment_analyses_used(p_user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+    UPDATE profiles
+    SET analyses_used = analyses_used + 1
+    WHERE id = p_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Fonction: Upgrade plan
 CREATE OR REPLACE FUNCTION public.upgrade_plan(
     p_user_id UUID,

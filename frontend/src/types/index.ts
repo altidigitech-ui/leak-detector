@@ -44,23 +44,19 @@ export interface Profile {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
-  subscription_status: SubscriptionStatus;
-  subscription_tier: SubscriptionTier | null;
-  credits_remaining: number;
+  plan: Plan;
+  stripe_customer_id: string | null;
+  analyses_used: number;
+  analyses_limit: number;
+  analyses_reset_at: string;
   created_at: string;
   updated_at: string;
 }
 
-export type SubscriptionStatus = 
+export type Plan =
   | 'free'
-  | 'active'
-  | 'past_due'
-  | 'canceled'
-  | 'trialing';
-
-export type SubscriptionTier = 
   | 'pro'
-  | 'enterprise';
+  | 'agency';
 
 // ============================================================================
 // Common Types

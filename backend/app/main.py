@@ -4,12 +4,13 @@ Leak Detector API - Main Application
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import sentry_sdk
 
 from app.config import settings
 from app.api.v1.router import api_router
+from app.core.errors import AppError, app_error_handler, http_exception_handler, generic_exception_handler
 from app.core.logging import setup_logging, get_logger
 
 logger = get_logger(__name__)
@@ -56,6 +57,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Exception handlers
+app.add_exception_handler(AppError, app_error_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
 
 
 # Health check
