@@ -123,7 +123,7 @@ STRIPE_PRICE_AGENCY_MONTHLY=price_xxx
 
 # Anthropic
 ANTHROPIC_API_KEY=sk-ant-xxx
-ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+ANTHROPIC_MODEL=claude-sonnet-4-5-20250929
 
 # Monitoring
 SENTRY_DSN=https://xxx@sentry.io/xxx
