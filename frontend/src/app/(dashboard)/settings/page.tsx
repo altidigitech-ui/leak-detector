@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -16,6 +16,7 @@ interface Profile {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,7 +28,6 @@ export default function SettingsPage() {
   }, []);
 
   const loadProfile = async () => {
-    const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
     if (user) {
@@ -50,7 +50,6 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage('');
 
-    const supabase = createClient();
     const { error } = await supabase
       .from('profiles')
       .update({ full_name: fullName })
@@ -67,7 +66,6 @@ export default function SettingsPage() {
 
   const handleManageBilling = async () => {
     try {
-      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/billing/portal`, {
@@ -87,7 +85,6 @@ export default function SettingsPage() {
   };
 
   const handleSignOut = async () => {
-    const supabase = createClient();
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();

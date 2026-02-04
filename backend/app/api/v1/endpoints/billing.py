@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from app.api.deps import CurrentUserID, Supabase
 from app.config import settings
 from app.core.errors import NotFoundError, StripeError
-from app.main import limiter
+from app.core.limiter import limiter
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
