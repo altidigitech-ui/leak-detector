@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_KEY: str
+    SUPABASE_JWT_SECRET: str  # Requis — Supabase Dashboard → Settings → API → JWT Secret
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -46,7 +47,7 @@ class Settings(BaseSettings):
     
     # Anthropic
     ANTHROPIC_API_KEY: str = ""
-    ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"
+    ANTHROPIC_MODEL: str = "claude-sonnet-4-5-20250929"
     
     # Playwright
     PLAYWRIGHT_TIMEOUT: int = 30000

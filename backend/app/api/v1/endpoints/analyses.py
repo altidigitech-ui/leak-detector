@@ -5,10 +5,11 @@ Analyses endpoints - Create and manage landing page analyses.
 from typing import List, Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Request, status
 from pydantic import BaseModel, Field, field_validator
 
 from app.api.deps import CurrentUserID, Supabase
+from app.main import limiter
 from app.core.errors import QuotaExceededError, ValidationError, NotFoundError
 from app.core.logging import get_logger
 from app.workers.tasks.analyze import analyze_page
@@ -70,26 +71,28 @@ class SingleAnalysisResponse(BaseModel):
 
 
 @router.post("", response_model=SingleAnalysisResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def create_analysis(
-    request: CreateAnalysisRequest,
+    request: Request,
+    body: CreateAnalysisRequest,
     user_id: CurrentUserID,
     supabase: Supabase,
 ):
     """
     Create a new landing page analysis.
-    
+
     This will:
     1. Check user's quota
     2. Create an analysis record
     3. Queue the analysis task
     4. Return the analysis ID for polling
     """
-    logger.info("analysis_create_requested", user_id=user_id, url_domain=urlparse(request.url).netloc)
-    
+    logger.info("analysis_create_requested", user_id=user_id, url_domain=urlparse(body.url).netloc)
+
     # Get user profile and check quota
     profile = await supabase.get_profile(user_id)
     if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
+        raise NotFoundError("Profile")
     
     # Check quota
     if profile["analyses_used"] >= profile["analyses_limit"]:
@@ -101,7 +104,7 @@ async def create_analysis(
     # Create analysis record
     analysis = await supabase.create_analysis(
         user_id=user_id,
-        url=request.url,
+        url=body.url,
     )
     
     # Increment quota

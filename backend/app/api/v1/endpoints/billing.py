@@ -5,12 +5,13 @@ Billing endpoints - Stripe checkout and subscription management.
 from typing import Optional
 
 import stripe
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUserID, Supabase
 from app.config import settings
-from app.core.errors import StripeError
+from app.core.errors import NotFoundError, StripeError
+from app.main import limiter
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -46,30 +47,32 @@ class BillingStatusResponse(BaseModel):
 
 
 @router.post("/checkout", response_model=CheckoutResponse)
+@limiter.limit("5/minute")
 async def create_checkout_session(
-    request: CheckoutRequest,
+    request: Request,
+    body: CheckoutRequest,
     user_id: CurrentUserID,
     supabase: Supabase,
 ):
     """
     Create a Stripe Checkout session for subscription.
-    
+
     Returns a URL to redirect the user to Stripe Checkout.
     """
-    logger.info("checkout_requested", user_id=user_id, price_id=request.price_id)
-    
+    logger.info("checkout_requested", user_id=user_id, price_id=body.price_id)
+
     # Get user profile
     profile = await supabase.get_profile(user_id)
     if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
-    
+        raise NotFoundError("Profile")
+
     # Map price_id to actual Stripe price
     price_map = {
         "price_pro_monthly": settings.STRIPE_PRICE_PRO_MONTHLY,
         "price_agency_monthly": settings.STRIPE_PRICE_AGENCY_MONTHLY,
     }
-    
-    stripe_price_id = price_map.get(request.price_id)
+
+    stripe_price_id = price_map.get(body.price_id)
     if not stripe_price_id:
         raise StripeError("Invalid price ID")
     
@@ -116,21 +119,23 @@ async def create_checkout_session(
 
 
 @router.post("/portal", response_model=PortalResponse)
+@limiter.limit("5/minute")
 async def create_portal_session(
+    request: Request,
     user_id: CurrentUserID,
     supabase: Supabase,
 ):
     """
     Create a Stripe Customer Portal session.
-    
+
     Allows users to manage their subscription, update payment method, etc.
     """
     logger.info("portal_requested", user_id=user_id)
-    
+
     # Get user profile
     profile = await supabase.get_profile(user_id)
     if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
+        raise NotFoundError("Profile")
     
     customer_id = profile.get("stripe_customer_id")
     if not customer_id:
@@ -162,8 +167,8 @@ async def get_billing_status(
     # Get user profile
     profile = await supabase.get_profile(user_id)
     if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
-    
+        raise NotFoundError("Profile")
+
     # Get active subscription if any
     subscription = await supabase.get_active_subscription(user_id)
     

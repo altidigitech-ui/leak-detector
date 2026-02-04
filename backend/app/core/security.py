@@ -4,43 +4,38 @@ Security utilities for JWT validation and authentication.
 
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from app.config import settings
-from app.core.errors import AuthenticationError
+from app.core.errors import AuthenticationError, ValidationError
 
 security = HTTPBearer()
 
 
 def verify_supabase_token(token: str) -> dict:
     """
-    Verify a Supabase JWT token.
-    
-    Args:
-        token: The JWT token to verify
-        
-    Returns:
-        The decoded token payload
-        
-    Raises:
-        AuthenticationError: If the token is invalid
+    Verify a Supabase JWT token with signature validation.
+
+    Validates: signature (HS256), expiration, issuer.
     """
     try:
-        # Supabase uses the SUPABASE_JWT_SECRET to sign tokens
-        # For now, we'll decode without verification and let Supabase handle it
-        # In production, you should verify with the JWT secret
-        
-        # Decode without verification to get the payload
-        # The actual verification happens when we call Supabase API
         payload = jwt.decode(
             token,
-            options={"verify_signature": False},
+            settings.SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience="authenticated",
+            options={
+                "verify_exp": True,
+                "verify_aud": True,
+            },
         )
-        
         return payload
-        
+    except jwt.ExpiredSignatureError:
+        raise AuthenticationError("Token has expired")
+    except jwt.JWTClaimsError:
+        raise AuthenticationError("Invalid token claims")
     except JWTError as e:
         raise AuthenticationError(f"Invalid token: {str(e)}")
 
@@ -121,7 +116,4 @@ def verify_stripe_webhook_signature(payload: bytes, signature: str) -> bool:
         )
         return True
     except stripe.error.SignatureVerificationError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid webhook signature",
-        )
+        raise ValidationError("Invalid webhook signature")
