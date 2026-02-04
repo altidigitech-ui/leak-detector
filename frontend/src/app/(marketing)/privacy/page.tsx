@@ -148,8 +148,8 @@ export default function PrivacyPage() {
               </ul>
               <p className="text-gray-700 leading-relaxed mt-4">
                 To exercise these rights, contact us at{' '}
-                <a href="mailto:support@leakdetector.io" className="text-primary-600 hover:underline">
-                  support@leakdetector.io
+                <a href="mailto:support@leakdetector.tech" className="text-primary-600 hover:underline">
+                  support@leakdetector.tech
                 </a>
                 . We will respond within 30 days.
               </p>
@@ -196,13 +196,13 @@ export default function PrivacyPage() {
               </p>
               <ul className="list-none text-gray-700 mt-4 space-y-1">
                 <li><strong>Email:</strong>{' '}
-                  <a href="mailto:support@leakdetector.io" className="text-primary-600 hover:underline">
-                    support@leakdetector.io
+                  <a href="mailto:support@leakdetector.tech" className="text-primary-600 hover:underline">
+                    support@leakdetector.tech
                   </a>
                 </li>
                 <li><strong>Data Protection Officer:</strong>{' '}
-                  <a href="mailto:dpo@leakdetector.io" className="text-primary-600 hover:underline">
-                    dpo@leakdetector.io
+                  <a href="mailto:dpo@leakdetector.tech" className="text-primary-600 hover:underline">
+                    dpo@leakdetector.tech
                   </a>
                 </li>
               </ul>
