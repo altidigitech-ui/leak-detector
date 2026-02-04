@@ -1,62 +1,71 @@
 """
 Security utilities for JWT validation and authentication.
+
+Uses direct HTTP calls to Supabase GoTrue API to verify tokens.
+This avoids supabase SDK version conflicts and HS256/ES256 algorithm issues.
 """
 
 from typing import Optional
 
+import httpx
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from supabase import create_client
 
 from app.config import settings
 from app.core.errors import AuthenticationError, ValidationError
 
 security = HTTPBearer()
 
-# Initialize Supabase client once at module level
-_supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
+# Supabase GoTrue endpoint
+_AUTH_URL = f"{settings.SUPABASE_URL}/auth/v1/user"
 
 
 def verify_supabase_token(token: str) -> dict:
     """
-    Verify a Supabase JWT token using Supabase's auth API.
+    Verify a Supabase JWT token by calling Supabase's GoTrue API.
 
-    Uses supabase.auth.get_user() which handles ES256/HS256
-    verification server-side — no algorithm mismatch issues.
+    Sends the token to Supabase server which handles all verification
+    (signature, expiration, algorithm) regardless of HS256 or ES256.
     """
     try:
-        response = _supabase.auth.get_user(token)
+        response = httpx.get(
+            _AUTH_URL,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "apikey": settings.SUPABASE_SERVICE_KEY,
+            },
+            timeout=10.0,
+        )
 
-        if not response or not response.user:
-            raise AuthenticationError("Invalid token")
+        if response.status_code == 401:
+            raise AuthenticationError("Invalid or expired token")
 
-        user = response.user
+        if response.status_code != 200:
+            raise AuthenticationError(f"Token verification failed (HTTP {response.status_code})")
+
+        user_data = response.json()
+        user_id = user_data.get("id")
+
+        if not user_id:
+            raise AuthenticationError("Token missing user ID")
+
         return {
-            "sub": user.id,
-            "email": user.email,
+            "sub": user_id,
+            "email": user_data.get("email"),
             "aud": "authenticated",
-            "role": user.role,
+            "role": user_data.get("role"),
         }
     except AuthenticationError:
         raise
+    except httpx.TimeoutException:
+        raise AuthenticationError("Token verification timed out")
     except Exception as e:
-        error_msg = str(e).lower()
-        if "expired" in error_msg:
-            raise AuthenticationError("Token has expired")
-        if "invalid" in error_msg or "unauthorized" in error_msg:
-            raise AuthenticationError("Invalid token")
         raise AuthenticationError(f"Token verification failed: {str(e)}")
 
 
 def get_user_id_from_token(token: str) -> str:
     """
     Extract user ID from a Supabase JWT token.
-
-    Args:
-        token: The JWT token
-
-    Returns:
-        The user ID (sub claim)
     """
     payload = verify_supabase_token(token)
     user_id = payload.get("sub")
@@ -72,12 +81,6 @@ async def get_current_user_id(
 ) -> str:
     """
     FastAPI dependency to get the current authenticated user ID.
-
-    Args:
-        credentials: The HTTP Bearer credentials
-
-    Returns:
-        The authenticated user's ID
     """
     token = credentials.credentials
     return get_user_id_from_token(token)
@@ -104,13 +107,6 @@ async def get_optional_user_id(
 def verify_stripe_webhook_signature(payload: bytes, signature: str) -> bool:
     """
     Verify a Stripe webhook signature.
-
-    Args:
-        payload: The raw request body
-        signature: The Stripe-Signature header
-
-    Returns:
-        True if valid, raises exception otherwise
     """
     import stripe
 
