@@ -2,10 +2,15 @@
 Custom exceptions and error handling.
 """
 
+import traceback
 from typing import Any, Dict, Optional
 
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
+
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class AppError(Exception):
@@ -167,9 +172,14 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle unexpected exceptions."""
-    import traceback
-    logger = __import__("app.core.logging", fromlist=["get_logger"]).get_logger(__name__)
-    logger.error("unhandled_exception", error=str(exc), traceback=traceback.format_exc(), path=request.url.path)
+    logger.error(
+        "unhandled_exception",
+        error=str(exc),
+        error_type=type(exc).__name__,
+        traceback=traceback.format_exc(),
+        path=request.url.path,
+        method=request.method,
+    )
     return JSONResponse(
         status_code=500,
         content={
