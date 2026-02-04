@@ -46,6 +46,10 @@ jobs:
           APP_ENV: test
           APP_SECRET_KEY: test-secret-key-for-ci-only-min-32-chars
           REDIS_URL: redis://localhost:6379/0
+          SUPABASE_URL: https://test.supabase.co
+          SUPABASE_ANON_KEY: eyJ0ZXN0Ijoic3VwYWJhc2UifQ
+          SUPABASE_SERVICE_KEY: eyJ0ZXN0Ijoic2VydmljZSJ9
+          SUPABASE_JWT_SECRET: test-jwt-secret-for-ci-only-must-be-at-least-32-chars
         run: pytest --cov=app --cov-report=xml -v
       
       - name: Upload coverage
