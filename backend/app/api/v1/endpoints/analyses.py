@@ -9,7 +9,7 @@ from fastapi import APIRouter, Request, status
 from pydantic import BaseModel, Field, field_validator
 
 from app.api.deps import CurrentUserID, Supabase
-from app.main import limiter
+from app.core.limiter import limiter
 from app.core.errors import QuotaExceededError, ValidationError, NotFoundError
 from app.core.logging import get_logger
 from app.workers.tasks.analyze import analyze_page

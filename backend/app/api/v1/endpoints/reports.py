@@ -4,7 +4,7 @@ Reports endpoints - Retrieve analysis reports.
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUserID, Supabase
@@ -115,131 +115,73 @@ async def list_reports(
     )
 
 
+def _build_report_data(report: dict) -> ReportData:
+    """Build ReportData from a raw Supabase report dict. Used by get_report and get_report_by_analysis."""
+    categories = []
+    for cat in report.get("categories", []):
+        categories.append(Category(
+            name=cat.get("name", ""),
+            label=cat.get("label", cat.get("name", "")),
+            score=cat.get("score", 0),
+            issues=[
+                Issue(
+                    severity=issue.get("severity", "info"),
+                    title=issue.get("title", ""),
+                    description=issue.get("description", ""),
+                    recommendation=issue.get("recommendation", ""),
+                )
+                for issue in cat.get("issues", [])
+            ]
+        ))
+
+    page_metadata = None
+    if report.get("page_metadata"):
+        pm = report["page_metadata"]
+        page_metadata = PageMetadata(
+            title=pm.get("title"),
+            load_time_ms=pm.get("load_time_ms"),
+            word_count=pm.get("word_count"),
+            image_count=pm.get("image_count"),
+        )
+
+    url = ""
+    if report.get("analyses"):
+        url = report["analyses"].get("url", "")
+
+    return ReportData(
+        id=report["id"],
+        analysis_id=report["analysis_id"],
+        url=url,
+        score=report["score"],
+        summary=report["summary"],
+        categories=categories,
+        screenshot_url=report.get("screenshot_url"),
+        page_metadata=page_metadata,
+        created_at=report["created_at"],
+    )
+
+
 @router.get("/{report_id}", response_model=SingleReportResponse)
-async def get_report(
-    report_id: str,
-    user_id: CurrentUserID,
-    supabase: Supabase,
-):
+async def get_report(report_id: str, user_id: CurrentUserID, supabase: Supabase):
     """
     Get a specific report by ID.
-    
+
     Returns the full report with all categories and issues.
     """
     report = await supabase.get_report(report_id, user_id)
-    
     if not report:
         raise NotFoundError("Report")
-    
-    # Parse categories from JSONB
-    categories = []
-    for cat in report.get("categories", []):
-        categories.append(Category(
-            name=cat.get("name", ""),
-            label=cat.get("label", cat.get("name", "")),
-            score=cat.get("score", 0),
-            issues=[
-                Issue(
-                    severity=issue.get("severity", "info"),
-                    title=issue.get("title", ""),
-                    description=issue.get("description", ""),
-                    recommendation=issue.get("recommendation", ""),
-                )
-                for issue in cat.get("issues", [])
-            ]
-        ))
-    
-    # Parse page metadata
-    page_metadata = None
-    if report.get("page_metadata"):
-        pm = report["page_metadata"]
-        page_metadata = PageMetadata(
-            title=pm.get("title"),
-            load_time_ms=pm.get("load_time_ms"),
-            word_count=pm.get("word_count"),
-            image_count=pm.get("image_count"),
-        )
-    
-    # Get URL from analysis
-    url = ""
-    if report.get("analyses"):
-        url = report["analyses"].get("url", "")
-    
-    return SingleReportResponse(
-        data=ReportData(
-            id=report["id"],
-            analysis_id=report["analysis_id"],
-            url=url,
-            score=report["score"],
-            summary=report["summary"],
-            categories=categories,
-            screenshot_url=report.get("screenshot_url"),
-            page_metadata=page_metadata,
-            created_at=report["created_at"],
-        )
-    )
+    return SingleReportResponse(data=_build_report_data(report))
 
 
 @router.get("/by-analysis/{analysis_id}", response_model=SingleReportResponse)
-async def get_report_by_analysis(
-    analysis_id: str,
-    user_id: CurrentUserID,
-    supabase: Supabase,
-):
+async def get_report_by_analysis(analysis_id: str, user_id: CurrentUserID, supabase: Supabase):
     """
     Get a report by its analysis ID.
-    
+
     Useful when polling for analysis completion.
     """
     report = await supabase.get_report_by_analysis(analysis_id, user_id)
-    
     if not report:
         raise NotFoundError("Report")
-    
-    # Parse categories from JSONB
-    categories = []
-    for cat in report.get("categories", []):
-        categories.append(Category(
-            name=cat.get("name", ""),
-            label=cat.get("label", cat.get("name", "")),
-            score=cat.get("score", 0),
-            issues=[
-                Issue(
-                    severity=issue.get("severity", "info"),
-                    title=issue.get("title", ""),
-                    description=issue.get("description", ""),
-                    recommendation=issue.get("recommendation", ""),
-                )
-                for issue in cat.get("issues", [])
-            ]
-        ))
-    
-    # Parse page metadata
-    page_metadata = None
-    if report.get("page_metadata"):
-        pm = report["page_metadata"]
-        page_metadata = PageMetadata(
-            title=pm.get("title"),
-            load_time_ms=pm.get("load_time_ms"),
-            word_count=pm.get("word_count"),
-            image_count=pm.get("image_count"),
-        )
-    
-    # Get URL from analysis
-    url = ""
-    if report.get("analyses"):
-        url = report["analyses"].get("url", "")
-    
-    return SingleReportResponse(
-        data=ReportData(
-            id=report["id"],
-            analysis_id=report["analysis_id"],
-            url=url,
-            score=report["score"],
-            summary=report["summary"],
-            categories=categories,
-            screenshot_url=report.get("screenshot_url"),
-            page_metadata=page_metadata,
-            created_at=report["created_at"],
-        )
-    )
+    return SingleReportResponse(data=_build_report_data(report))

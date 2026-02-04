@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import type { ReportCategory } from '@/types';
 
 export default async function ReportsPage() {
   const supabase = await createClient();
@@ -56,7 +57,7 @@ export default async function ReportsPage() {
 
               {/* Category scores preview */}
               <div className="mt-4 flex gap-2 flex-wrap">
-                {report.categories?.slice(0, 4).map((cat: any) => (
+                {report.categories?.slice(0, 4).map((cat: ReportCategory) => (
                   <span
                     key={cat.name}
                     className={`text-xs px-2 py-1 rounded-full ${

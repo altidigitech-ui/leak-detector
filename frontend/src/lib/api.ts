@@ -1,3 +1,5 @@
+import type { Analysis, Report, ReportListItem, BillingStatus, PaginationMeta } from '@/types';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface ApiResponse<T> {
@@ -6,9 +8,9 @@ interface ApiResponse<T> {
   error?: {
     code: string;
     message: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
   };
-  meta?: Record<string, any>;
+  meta?: PaginationMeta;
 }
 
 class ApiClient {
@@ -55,20 +57,20 @@ class ApiClient {
   }
 
   async listAnalyses(limit = 20, offset = 0) {
-    return this.request<any[]>(`/api/v1/analyses?limit=${limit}&offset=${offset}`);
+    return this.request<Analysis[]>(`/api/v1/analyses?limit=${limit}&offset=${offset}`);
   }
 
   // Reports
   async getReport(id: string) {
-    return this.request<any>(`/api/v1/reports/${id}`);
+    return this.request<Report>(`/api/v1/reports/${id}`);
   }
 
   async getReportByAnalysis(analysisId: string) {
-    return this.request<any>(`/api/v1/reports/by-analysis/${analysisId}`);
+    return this.request<Report>(`/api/v1/reports/by-analysis/${analysisId}`);
   }
 
   async listReports(limit = 20, offset = 0) {
-    return this.request<any[]>(`/api/v1/reports?limit=${limit}&offset=${offset}`);
+    return this.request<ReportListItem[]>(`/api/v1/reports?limit=${limit}&offset=${offset}`);
   }
 
   // Billing
@@ -86,12 +88,7 @@ class ApiClient {
   }
 
   async getBillingStatus() {
-    return this.request<{
-      plan: string;
-      analyses_used: number;
-      analyses_limit: number;
-      subscription?: { status: string; current_period_end: string };
-    }>('/api/v1/billing/status');
+    return this.request<BillingStatus>('/api/v1/billing/status');
   }
 }
 

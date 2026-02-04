@@ -20,10 +20,9 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginationMeta {
-  page: number;
   limit: number;
+  offset: number;
   total: number;
-  total_pages: number;
 }
 
 // ============================================================================
@@ -87,14 +86,80 @@ export interface WithClassName {
 }
 
 // ============================================================================
-// Feature-specific Types (add your own)
+// Analysis Types
 // ============================================================================
 
-// Example:
-// export interface Report extends Timestamps {
-//   id: string;
-//   user_id: string;
-//   url: string;
-//   status: Status;
-//   result: ReportResult | null;
-// }
+export interface Analysis {
+  id: string;
+  url: string;
+  status: Status;
+  error_code: string | null;
+  error_message: string | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+// ============================================================================
+// Report Types
+// ============================================================================
+
+export interface ReportIssue {
+  severity: 'critical' | 'warning' | 'info';
+  title: string;
+  description: string;
+  recommendation: string;
+}
+
+export interface ReportCategory {
+  name: string;
+  label: string;
+  score: number;
+  issues: ReportIssue[];
+}
+
+export interface PageMetadata {
+  title: string | null;
+  load_time_ms: number | null;
+  word_count: number | null;
+  image_count: number | null;
+}
+
+export interface Report {
+  id: string;
+  analysis_id: string;
+  url: string;
+  score: number;
+  summary: string;
+  categories: ReportCategory[];
+  screenshot_url: string | null;
+  page_metadata: PageMetadata | null;
+  created_at: string;
+}
+
+export interface ReportListItem {
+  id: string;
+  analysis_id: string;
+  url: string;
+  score: number;
+  summary: string;
+  created_at: string;
+}
+
+// ============================================================================
+// Billing Types
+// ============================================================================
+
+export interface SubscriptionInfo {
+  status: string;
+  current_period_end: string;
+}
+
+export interface BillingStatus {
+  plan: Plan;
+  analyses_used: number;
+  analyses_limit: number;
+  analyses_reset_at: string;
+  stripe_customer_id: string | null;
+  subscription: SubscriptionInfo | null;
+}

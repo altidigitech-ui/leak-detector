@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 export default function AnalyzePage() {
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -145,7 +146,6 @@ export default function AnalyzePage() {
   };
 
   const getAccessToken = async () => {
-    const supabase = createClient();
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token || '';
   };

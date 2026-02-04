@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import type { ReportCategory, ReportIssue } from '@/types';
 
 interface PageProps {
   params: { id: string };
@@ -22,12 +23,12 @@ export default async function ReportPage({ params }: PageProps) {
     notFound();
   }
 
-  const categories = report.categories || [];
-  const criticalIssues = categories.flatMap((c: any) =>
-    c.issues?.filter((i: any) => i.severity === 'critical') || []
+  const categories: ReportCategory[] = report.categories || [];
+  const criticalIssues = categories.flatMap((c: ReportCategory) =>
+    c.issues?.filter((i: ReportIssue) => i.severity === 'critical') || []
   );
-  const warningIssues = categories.flatMap((c: any) =>
-    c.issues?.filter((i: any) => i.severity === 'warning') || []
+  const warningIssues = categories.flatMap((c: ReportCategory) =>
+    c.issues?.filter((i: ReportIssue) => i.severity === 'warning') || []
   );
 
   return (
@@ -95,7 +96,7 @@ export default async function ReportPage({ params }: PageProps) {
       <div className="card mb-6">
         <h2 className="font-semibold text-lg mb-4">Category Scores</h2>
         <div className="grid md:grid-cols-4 gap-4">
-          {categories.map((category: any) => (
+          {categories.map((category: ReportCategory) => (
             <div
               key={category.name}
               className="p-4 bg-gray-50 rounded-lg text-center"
@@ -122,7 +123,7 @@ export default async function ReportPage({ params }: PageProps) {
 
       {/* Issues by category */}
       <div className="space-y-6">
-        {categories.map((category: any) => (
+        {categories.map((category: ReportCategory) => (
           <div key={category.name} className="card">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-lg">{category.label || category.name}</h2>
@@ -141,7 +142,7 @@ export default async function ReportPage({ params }: PageProps) {
 
             {category.issues && category.issues.length > 0 ? (
               <div className="space-y-4">
-                {category.issues.map((issue: any, index: number) => (
+                {category.issues.map((issue: ReportIssue, index: number) => (
                   <div
                     key={index}
                     className={`p-4 rounded-lg border ${
