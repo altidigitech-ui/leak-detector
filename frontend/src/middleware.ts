@@ -1,44 +1,12 @@
-import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+  // Check for a small flag cookie set after login
+  // The full Supabase session cookie (~4500 bytes) exceeds the 4096-byte
+  // browser limit for cookies sent in HTTP headers, so the server never sees it.
+  // This tiny flag cookie is guaranteed to be sent.
+  const isAuthenticated = request.cookies.get('auth-status')?.value === '1';
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          response = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // Use getSession() instead of getUser()
-  // getUser() makes a network call to Supabase which fails in Vercel's edge runtime
-  // getSession() reads the JWT directly from cookies — no network call needed
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  // Define protected and auth routes
   const protectedRoutes = ['/dashboard', '/settings', '/analyze', '/reports'];
   const authRoutes = ['/login', '/register', '/forgot-password'];
 
@@ -49,19 +17,17 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
-  // Redirect unauthenticated users from protected routes
-  if (isProtectedRoute && !session) {
+  if (isProtectedRoute && !isAuthenticated) {
     const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('redirect', request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect authenticated users from auth routes
-  if (isAuthRoute && session) {
+  if (isAuthRoute && isAuthenticated) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
