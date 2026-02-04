@@ -6,7 +6,7 @@ bypassing the supabase-py SDK to avoid dependency version conflicts.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
@@ -72,7 +72,8 @@ class SupabaseService:
     def _rpc(self, function_name, params):
         response = self._client.post(f"{self._rpc_url}/{function_name}", json=params)
         response.raise_for_status()
-        if not response.content:
+        # Some RPC functions return void (204 No Content) - handle empty body
+        if not response.content or response.status_code == 204:
             return None
         return response.json()
 
@@ -153,6 +154,7 @@ class SupabaseService:
 
 
 _supabase_service: Optional[SupabaseService] = None
+
 
 def get_supabase_service() -> SupabaseService:
     global _supabase_service
