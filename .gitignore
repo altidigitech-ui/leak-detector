@@ -1,24 +1,22 @@
 # Dependencies
 node_modules/
-venv/
+.npm
+
+# Python
 __pycache__/
-*.pyc
-.pytest_cache/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
 
 # Environment
 .env
 .env.local
-.env.production
-*.pem
-*.key
-
-# Build
-.next/
-out/
-dist/
-build/
-*.egg-info/
-*.tsbuildinfo
+.env.*.local
 
 # IDE
 .vscode/
@@ -30,19 +28,18 @@ build/
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-logs/
+# Next.js
+.next/
+out/
+
+# Vercel
+.vercel
 
 # Testing
-coverage/
 .coverage
 htmlcov/
+.pytest_cache/
 
 # Misc
-*.bak
-*.tmp
-
-# Playwright
-playwright-report/
-test-results/
+*.log
+*.tsbuildinfo

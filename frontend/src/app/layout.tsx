@@ -7,10 +7,29 @@ import { ToastContainer } from '@/components/ui/toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Leak Detector - Find Conversion Leaks in Your Landing Pages',
-  description:
-    'Identify in 30 seconds what makes visitors leave your landing page. Get actionable recommendations to improve your conversion rate.',
-  keywords: ['landing page', 'conversion', 'CRO', 'optimization', 'analysis'],
+  metadataBase: new URL('https://leakdetector.tech'),
+  title: {
+    default: 'Leak Detector — Find What Makes Visitors Leave Your Page',
+    template: '%s — Leak Detector',
+  },
+  description: 'AI-powered landing page analysis. Identify conversion leaks and get actionable recommendations in 30 seconds.',
+  keywords: ['landing page', 'conversion', 'CRO', 'optimization', 'analysis', 'AI'],
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://leakdetector.tech',
+    siteName: 'Leak Detector',
+    title: 'Leak Detector — Find What Makes Visitors Leave Your Page',
+    description: 'AI-powered landing page analysis. Get actionable recommendations in 30 seconds.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Leak Detector',
+    description: 'AI-powered landing page analysis. Get actionable recommendations in 30 seconds.',
+  },
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
