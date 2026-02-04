@@ -8,8 +8,8 @@
 
 | Environnement | URL |
 |----------------|-----|
-| Production | `https://api.leakdetector.io/api/v1` |
-| Staging | `https://api-staging.leakdetector.io/api/v1` |
+| Production | `https://api.leakdetector.tech/api/v1` |
+| Staging | `https://api-staging.leakdetector.tech/api/v1` |
 | Local | `http://localhost:8000/api/v1` |
 
 ---
@@ -633,7 +633,7 @@ class LeakDetectorAPI {
 
 // Usage
 const api = new LeakDetectorAPI(
-  'https://api.leakdetector.io/api/v1',
+  'https://api.leakdetector.tech/api/v1',
   'eyJ...'
 );
 
@@ -645,17 +645,17 @@ const report = await api.getReport(result.data.report_id);
 ### cURL
 ```bash
 # Créer une analyse
-curl -X POST https://api.leakdetector.io/api/v1/analyses \
+curl -X POST https://api.leakdetector.tech/api/v1/analyses \
   -H "Authorization: Bearer eyJ..." \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com"}'
 
 # Vérifier le status
-curl https://api.leakdetector.io/api/v1/analyses/550e8400... \
+curl https://api.leakdetector.tech/api/v1/analyses/550e8400... \
   -H "Authorization: Bearer eyJ..."
 
 # Récupérer le rapport
-curl https://api.leakdetector.io/api/v1/reports/660e8400... \
+curl https://api.leakdetector.tech/api/v1/reports/660e8400... \
   -H "Authorization: Bearer eyJ..."
 ```
 

@@ -1,19 +1,24 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { ErrorState } from '@/components/shared/error-state';
 import type { ReportCategory } from '@/types';
 
 export default async function ReportsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  // Get all reports with their analyses
-  const { data: reports } = await supabase
-    .from('reports')
-    .select('*, analyses!inner(url, user_id)')
-    .eq('analyses.user_id', user?.id)
-    .order('created_at', { ascending: false });
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  return (
+    // Get all reports with their analyses
+    const { data: reports, error: reportsError } = await supabase
+      .from('reports')
+      .select('*, analyses!inner(url, user_id)')
+      .eq('analyses.user_id', user?.id)
+      .order('created_at', { ascending: false });
+
+    if (reportsError) throw reportsError;
+
+    return (
     <div>
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -94,6 +99,14 @@ export default async function ReportsPage() {
       )}
     </div>
   );
+  } catch (error) {
+    return (
+      <ErrorState
+        title="Failed to load reports"
+        message="We couldn't load your reports. Please try refreshing the page."
+      />
+    );
+  }
 }
 
 function ScoreIndicator({ score }: { score: number }) {

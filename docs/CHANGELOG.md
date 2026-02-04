@@ -179,7 +179,7 @@ git push origin main --tags
 ### 5. Vérifier
 ```bash
 # Health checks
-curl https://api.leakdetector.io/health
+curl https://api.leakdetector.tech/health
 
 # Smoke test
 # - Login

@@ -143,7 +143,7 @@ export default function HomePage() {
             <div>
               <h4 className="text-white font-semibold mb-4">Contact</h4>
               <ul className="space-y-2 text-sm">
-                <li>support@leakdetector.io</li>
+                <li>support@leakdetector.tech</li>
               </ul>
             </div>
           </div>

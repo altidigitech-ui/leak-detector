@@ -399,13 +399,13 @@ railway logs | grep "analysis_id=xxx"
 
 | Monitor | URL | Intervalle | Alert |
 |---------|-----|------------|-------|
-| API Health | https://api.leakdetector.io/health | 30s | SMS + Email |
-| Frontend | https://leakdetector.io | 60s | Email |
+| API Health | https://api.leakdetector.tech/health | 30s | SMS + Email |
+| Frontend | https://leakdetector.tech | 60s | Email |
 | Supabase | https://xxx.supabase.co/rest/v1/ | 60s | Email |
 
 ### Status Page
 
-URL publique : status.leakdetector.io (optionnel)
+URL publique : status.leakdetector.tech (optionnel)
 
 ---
 

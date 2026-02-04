@@ -760,7 +760,7 @@ export const metadata = {
 9. **Termination** — Droit de suspendre les comptes qui violent les conditions
 10. **Changes to Terms** — Notification par email pour les changements matériels
 11. **Governing Law** — French law (si société française) ou préciser
-12. **Contact** — support@leakdetector.io
+12. **Contact** — support@leakdetector.tech
 
 **Layout** : Header + footer identiques à la pricing page existante. Contenu dans un `max-w-3xl mx-auto` avec une prose claire. Chaque section est un `<h2>` avec des paragraphes. Date de dernière mise à jour en haut.
 
@@ -790,11 +790,11 @@ export const metadata = {
    - Railway (backend hosting)
    - Sentry (error monitoring)
 6. **Data Retention** — Account data kept while active, deleted 30 days after account deletion, analysis data kept for the subscription period
-7. **Your Rights** — Access, rectification, deletion, portability, restriction, objection. Contact: support@leakdetector.io
+7. **Your Rights** — Access, rectification, deletion, portability, restriction, objection. Contact: support@leakdetector.tech
 8. **Cookies** — Essential cookies only (Supabase auth session). No tracking cookies.
 9. **Data Security** — HTTPS, encrypted at rest (Supabase), no plain-text passwords
 10. **Changes to This Policy** — Notification par email
-11. **Contact** — support@leakdetector.io, DPO contact
+11. **Contact** — support@leakdetector.tech, DPO contact
 
 **Layout** : Identique à la Terms page. Header + footer cohérents avec pricing.
 
@@ -1105,7 +1105,7 @@ Aussi : utiliser Next.js favicon metadata dans `layout.tsx` (voir D4).
 Enrichir le metadata :
 ```typescript
 export const metadata: Metadata = {
-  metadataBase: new URL('https://leakdetector.io'),
+  metadataBase: new URL('https://leakdetector.tech'),
   title: {
     default: 'Leak Detector — Find What Makes Visitors Leave Your Page',
     template: '%s — Leak Detector',
@@ -1115,7 +1115,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://leakdetector.io',
+    url: 'https://leakdetector.tech',
     siteName: 'Leak Detector',
     title: 'Leak Detector — Find What Makes Visitors Leave Your Page',
     description: 'AI-powered landing page analysis. Get actionable recommendations in 30 seconds.',
@@ -1136,7 +1136,7 @@ export const metadata: Metadata = {
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://leakdetector.io';
+  const baseUrl = 'https://leakdetector.tech';
 
   return [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
@@ -1160,7 +1160,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/dashboard', '/settings', '/analyze', '/reports', '/api/'],
     },
-    sitemap: 'https://leakdetector.io/sitemap.xml',
+    sitemap: 'https://leakdetector.tech/sitemap.xml',
   };
 }
 ```
@@ -1235,5 +1235,5 @@ export const metadata: Metadata = {
 ### À FAIRE après le déploiement
 - [ ] Tester le flow complet (signup → analyse → upgrade → quota reset)
 - [ ] Configurer Stripe en mode live
-- [ ] Configurer domaine leakdetector.io (Vercel + Railway)
+- [ ] Configurer domaine leakdetector.tech (Vercel + Railway)
 - [ ] Ajouter `SUPABASE_JWT_SECRET` en env var Railway
