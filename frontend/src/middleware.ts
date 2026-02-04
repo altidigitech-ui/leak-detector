@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
@@ -16,8 +16,8 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           response = NextResponse.next({
@@ -31,10 +31,12 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session if expired
+  // Use getSession() instead of getUser()
+  // getUser() makes a network call to Supabase which fails in Vercel's edge runtime
+  // getSession() reads the JWT directly from cookies — no network call needed
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
   // Define protected and auth routes
   const protectedRoutes = ['/dashboard', '/settings', '/analyze', '/reports'];
@@ -48,14 +50,14 @@ export async function middleware(request: NextRequest) {
   );
 
   // Redirect unauthenticated users from protected routes
-  if (isProtectedRoute && !user) {
+  if (isProtectedRoute && !session) {
     const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('redirect', request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
   // Redirect authenticated users from auth routes
-  if (isAuthRoute && user) {
+  if (isAuthRoute && session) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -64,14 +66,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - api routes
-     */
     '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
   ],
 };
