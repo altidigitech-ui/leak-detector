@@ -409,8 +409,8 @@ SECURITY_HEADERS = {
 | Env | Frontend | Backend | Database |
 |-----|----------|---------|----------|
 | Development | localhost:3000 | localhost:8000 | Supabase local |
-| Staging | staging.leakdetector.io | api-staging.leakdetector.io | Supabase staging |
-| Production | leakdetector.io | api.leakdetector.io | Supabase prod |
+| Staging | staging.leakdetector.tech | api-staging.leakdetector.tech | Supabase staging |
+| Production | leakdetector.tech | api.leakdetector.tech | Supabase prod |
 
 ### Feature Flags
 

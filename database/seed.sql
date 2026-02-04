@@ -9,7 +9,7 @@
 -- Test User Profile
 -- ============================================
 -- First, create a user in Supabase Auth Dashboard:
--- Email: test@leakdetector.io
+-- Email: test@leakdetector.tech
 -- Password: TestPassword123!
 -- 
 -- Then run this to update their profile:
@@ -20,7 +20,7 @@
 --     plan = 'pro',
 --     analyses_limit = 50,
 --     analyses_used = 5
--- WHERE email = 'test@leakdetector.io';
+-- WHERE email = 'test@leakdetector.tech';
 
 
 -- ============================================

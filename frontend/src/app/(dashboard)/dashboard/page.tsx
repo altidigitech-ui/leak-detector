@@ -1,36 +1,43 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { ErrorState } from '@/components/shared/error-state';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  // Get profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user?.id)
-    .single();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  // Get recent analyses
-  const { data: analyses } = await supabase
-    .from('analyses')
-    .select('*, reports(*)')
-    .eq('user_id', user?.id)
-    .order('created_at', { ascending: false })
-    .limit(5);
+    // Get profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user?.id)
+      .single();
 
-  // Calculate average score
-  const completedAnalyses = analyses?.filter((a) => a.status === 'completed') || [];
-  const avgScore =
-    completedAnalyses.length > 0
-      ? Math.round(
-          completedAnalyses.reduce((sum, a) => sum + (a.reports?.[0]?.score || 0), 0) /
-            completedAnalyses.length
-        )
-      : null;
+    if (profileError) throw profileError;
 
-  return (
+    // Get recent analyses
+    const { data: analyses, error: analysesError } = await supabase
+      .from('analyses')
+      .select('*, reports(*)')
+      .eq('user_id', user?.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (analysesError) throw analysesError;
+
+    // Calculate average score
+    const completedAnalyses = analyses?.filter((a) => a.status === 'completed') || [];
+    const avgScore =
+      completedAnalyses.length > 0
+        ? Math.round(
+            completedAnalyses.reduce((sum, a) => sum + (a.reports?.[0]?.score || 0), 0) /
+              completedAnalyses.length
+          )
+        : null;
+
+    return (
     <div>
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -136,6 +143,14 @@ export default async function DashboardPage() {
       </div>
     </div>
   );
+  } catch (error) {
+    return (
+      <ErrorState
+        title="Failed to load dashboard"
+        message="We couldn't load your dashboard data. Please try refreshing the page."
+      />
+    );
+  }
 }
 
 function StatusBadge({ status }: { status: string }) {

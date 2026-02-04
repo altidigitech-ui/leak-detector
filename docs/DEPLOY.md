@@ -35,8 +35,8 @@
 
 | Env | Frontend URL | Backend URL | Branch |
 |-----|--------------|-------------|--------|
-| Production | leakdetector.io | api.leakdetector.io | main |
-| Staging | staging.leakdetector.io | api-staging.leakdetector.io | develop |
+| Production | leakdetector.tech | api.leakdetector.tech | main |
+| Staging | staging.leakdetector.tech | api-staging.leakdetector.tech | develop |
 | Development | localhost:3000 | localhost:8000 | feature/* |
 
 ---
@@ -101,11 +101,11 @@ APP_DEBUG=false
 APP_SECRET_KEY=<générer avec: openssl rand -hex 32>
 
 # URLs
-FRONTEND_URL=https://leakdetector.io
-BACKEND_URL=https://api.leakdetector.io
+FRONTEND_URL=https://leakdetector.tech
+BACKEND_URL=https://api.leakdetector.tech
 
 # CORS
-CORS_ORIGINS=https://leakdetector.io,https://www.leakdetector.io
+CORS_ORIGINS=https://leakdetector.tech,https://www.leakdetector.tech
 
 # Supabase
 SUPABASE_URL=https://xxx.supabase.co
@@ -132,7 +132,7 @@ SENTRY_DSN=https://xxx@sentry.io/xxx
 ### 4. Configurer le domaine
 
 1. Settings → Domains
-2. Add custom domain: `api.leakdetector.io`
+2. Add custom domain: `api.leakdetector.tech`
 3. Configurer DNS (CNAME)
 
 ### 5. Configurer le worker Celery
@@ -164,8 +164,8 @@ Option B : Service séparé (recommandé)
 ### 2. Variables d'environnement
 ```bash
 NEXT_PUBLIC_APP_NAME=LeakDetector
-NEXT_PUBLIC_APP_URL=https://leakdetector.io
-NEXT_PUBLIC_API_URL=https://api.leakdetector.io
+NEXT_PUBLIC_APP_URL=https://leakdetector.tech
+NEXT_PUBLIC_API_URL=https://api.leakdetector.tech
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
@@ -174,8 +174,8 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
 ### 3. Configurer le domaine
 
 1. Settings → Domains
-2. Add: `leakdetector.io`
-3. Add: `www.leakdetector.io` (redirect to apex)
+2. Add: `leakdetector.tech`
+3. Add: `www.leakdetector.tech` (redirect to apex)
 4. Configurer DNS
 
 ---
@@ -197,7 +197,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
 ### 2. Configurer le webhook
 
 1. Developers → Webhooks → Add Endpoint
-2. URL: `https://api.leakdetector.io/api/v1/webhooks/stripe`
+2. URL: `https://api.leakdetector.tech/api/v1/webhooks/stripe`
 3. Events:
    - `checkout.session.completed`
    - `customer.subscription.created`
@@ -211,13 +211,13 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
 
 1. Settings → Billing → Customer Portal
 2. Activer: Update payment method, Cancel subscription
-3. Business info: Leak Detector, support@leakdetector.io
+3. Business info: Leak Detector, support@leakdetector.tech
 
 ---
 
 ## DNS Configuration
 
-### Domaine principal (leakdetector.io)
+### Domaine principal (leakdetector.tech)
 
 | Type | Name | Value |
 |------|------|-------|
@@ -228,9 +228,9 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
 ### Vérification
 ```bash
 # Vérifier la propagation
-dig leakdetector.io
-dig api.leakdetector.io
-dig www.leakdetector.io
+dig leakdetector.tech
+dig api.leakdetector.tech
+dig www.leakdetector.tech
 ```
 
 ---
@@ -335,13 +335,13 @@ vercel rollback
 
 ### Backend
 ```bash
-curl https://api.leakdetector.io/health
+curl https://api.leakdetector.tech/health
 # {"status": "healthy", "service": "leak-detector-api"}
 ```
 
 ### Frontend
 ```bash
-curl -I https://leakdetector.io
+curl -I https://leakdetector.tech
 # HTTP/2 200
 ```
 

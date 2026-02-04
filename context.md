@@ -193,7 +193,7 @@ Un outil IA qui analyse instantanément une landing page et retourne un rapport 
 ## Liens
 
 - Repo : github.com/altidigitech-ui/leak-detector
-- Prod : leakdetector.io (à configurer)
-- Staging : staging.leakdetector.io
+- Prod : leakdetector.tech (à configurer)
+- Staging : staging.leakdetector.tech
 - Figma : [à créer]
 - Stripe : [à configurer]

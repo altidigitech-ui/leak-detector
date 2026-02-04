@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { ErrorState } from '@/components/shared/error-state';
 import type { ReportCategory, ReportIssue } from '@/types';
 
 interface PageProps {
@@ -9,21 +10,25 @@ interface PageProps {
 
 export default async function ReportPage({ params }: PageProps) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  // Get report with analysis
-  const { data: report } = await supabase
-    .from('reports')
-    .select('*, analyses!inner(url, user_id)')
-    .eq('id', params.id)
-    .eq('analyses.user_id', user?.id)
-    .single();
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!report) {
-    notFound();
-  }
+    // Get report with analysis
+    const { data: report, error: reportError } = await supabase
+      .from('reports')
+      .select('*, analyses!inner(url, user_id)')
+      .eq('id', params.id)
+      .eq('analyses.user_id', user?.id)
+      .single();
 
-  const categories: ReportCategory[] = report.categories || [];
+    if (reportError) throw reportError;
+
+    if (!report) {
+      notFound();
+    }
+
+    const categories: ReportCategory[] = report.categories || [];
   const criticalIssues = categories.flatMap((c: ReportCategory) =>
     c.issues?.filter((i: ReportIssue) => i.severity === 'critical') || []
   );
@@ -193,6 +198,14 @@ export default async function ReportPage({ params }: PageProps) {
       </div>
     </div>
   );
+  } catch (error) {
+    return (
+      <ErrorState
+        title="Failed to load report"
+        message="We couldn't load this report. Please try refreshing the page."
+      />
+    );
+  }
 }
 
 function ScoreCircle({ score }: { score: number }) {

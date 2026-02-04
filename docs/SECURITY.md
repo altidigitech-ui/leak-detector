@@ -140,9 +140,9 @@ SECURITY_HEADERS = {
 ### CORS
 ```python
 CORS_ORIGINS = [
-    "https://leakdetector.io",
-    "https://www.leakdetector.io",
-    "https://staging.leakdetector.io",
+    "https://leakdetector.tech",
+    "https://www.leakdetector.tech",
+    "https://staging.leakdetector.tech",
 ]
 
 # Dev only
@@ -294,7 +294,7 @@ PLAYWRIGHT_TIMEOUT = 30000  # 30 secondes max
 ```python
 USER_AGENT = (
     "LeakDetector/1.0 "
-    "(+https://leakdetector.io/bot; "
+    "(+https://leakdetector.tech/bot; "
     "Landing page analyzer)"
 )
 ```
@@ -322,7 +322,7 @@ USER_AGENT = (
 
 ### Contact sécurité
 
-security@leakdetector.io
+security@leakdetector.tech
 
 ---
 

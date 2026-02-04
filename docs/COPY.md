@@ -85,7 +85,7 @@ AI-powered landing page analysis for better conversions.
 **Sections:**
 - Product: Pricing, Features
 - Legal: Terms of Service, Privacy Policy
-- Contact: support@leakdetector.io
+- Contact: support@leakdetector.tech
 
 **Copyright:**
 © 2026 Leak Detector. All rights reserved.
