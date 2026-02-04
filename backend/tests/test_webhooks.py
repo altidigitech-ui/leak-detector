@@ -1,6 +1,5 @@
 """Tests for webhook helper functions."""
 
-import pytest
 from unittest.mock import patch
 from app.api.v1.endpoints.webhooks import get_plan_from_price, get_limit_for_plan
 

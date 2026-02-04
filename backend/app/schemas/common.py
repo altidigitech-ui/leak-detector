@@ -2,7 +2,7 @@
 Common Pydantic schemas used across the application.
 """
 
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, List, TypeVar
 from pydantic import BaseModel
 
 T = TypeVar("T")

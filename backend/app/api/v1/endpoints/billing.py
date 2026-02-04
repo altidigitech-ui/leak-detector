@@ -2,8 +2,6 @@
 Billing endpoints - Stripe checkout and subscription management.
 """
 
-from typing import Optional
-
 import stripe
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
