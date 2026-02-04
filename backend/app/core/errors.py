@@ -167,7 +167,9 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle unexpected exceptions."""
-    # Log the error (Sentry will capture it)
+    import traceback
+    logger = __import__("app.core.logging", fromlist=["get_logger"]).get_logger(__name__)
+    logger.error("unhandled_exception", error=str(exc), traceback=traceback.format_exc(), path=request.url.path)
     return JSONResponse(
         status_code=500,
         content={
