@@ -110,8 +110,11 @@ async def create_analysis(
     # Increment quota
     await supabase.increment_analyses_used(user_id)
     
-    # Queue the analysis task
-    analyze_page.delay(analysis["id"])
+    # Queue the analysis task (graceful if worker not available)
+    try:
+        analyze_page.delay(analysis["id"])
+    except Exception as e:
+        logger.warning("celery_dispatch_failed", analysis_id=analysis["id"], error=str(e))
     
     logger.info("analysis_created", analysis_id=analysis["id"], user_id=user_id)
     
