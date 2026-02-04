@@ -1,42 +1,31 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
-          );
-          response = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
+  // DEBUG ROUTE — hit /debug-auth in browser after login to see what cookies the server receives
+  if (request.nextUrl.pathname === '/debug-auth') {
+    const allCookies = request.cookies.getAll();
+    return NextResponse.json({
+      totalCookies: allCookies.length,
+      cookieNames: allCookies.map((c) => c.name),
+      cookies: allCookies.map((c) => ({
+        name: c.name,
+        valueLength: c.value.length,
+        valuePreview: c.value.substring(0, 50),
+      })),
+      headers: {
+        cookie: request.headers.get('cookie')?.substring(0, 200) || 'NO COOKIE HEADER',
       },
-    }
+    });
+  }
+
+  // Check for auth — try both: flag cookie AND Supabase cookie
+  const hasFlag = request.cookies.get('auth-status')?.value === '1';
+  const allCookies = request.cookies.getAll();
+  const hasSupabaseCookie = allCookies.some(
+    (c) => c.name.startsWith('sb-') && c.name.includes('auth-token')
   );
+  const isAuthenticated = hasFlag || hasSupabaseCookie;
 
-  // Refresh session if expired
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Define protected and auth routes
   const protectedRoutes = ['/dashboard', '/settings', '/analyze', '/reports'];
   const authRoutes = ['/login', '/register', '/forgot-password'];
 
@@ -47,31 +36,21 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
-  // Redirect unauthenticated users from protected routes
-  if (isProtectedRoute && !user) {
+  if (isProtectedRoute && !isAuthenticated) {
     const redirectUrl = new URL('/login', request.url);
     redirectUrl.searchParams.set('redirect', request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect authenticated users from auth routes
-  if (isAuthRoute && user) {
+  if (isAuthRoute && isAuthenticated) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - api routes
-     */
     '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
   ],
 };

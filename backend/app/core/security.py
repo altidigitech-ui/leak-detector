@@ -1,61 +1,78 @@
 """
 Security utilities for JWT validation and authentication.
+
+Uses direct HTTP calls to Supabase GoTrue API to verify tokens.
+This avoids supabase SDK version conflicts and HS256/ES256 algorithm issues.
 """
 
 from typing import Optional
 
+import httpx
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 
 from app.config import settings
 from app.core.errors import AuthenticationError, ValidationError
 
 security = HTTPBearer()
 
+# Supabase GoTrue endpoint
+_AUTH_URL = f"{settings.SUPABASE_URL}/auth/v1/user"
+
 
 def verify_supabase_token(token: str) -> dict:
     """
-    Verify a Supabase JWT token with signature validation.
+    Verify a Supabase JWT token by calling Supabase's GoTrue API.
 
-    Validates: signature (HS256), expiration, issuer.
+    Sends the token to Supabase server which handles all verification
+    (signature, expiration, algorithm) regardless of HS256 or ES256.
     """
     try:
-        payload = jwt.decode(
-            token,
-            settings.SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            audience="authenticated",
-            options={
-                "verify_exp": True,
-                "verify_aud": True,
+        response = httpx.get(
+            _AUTH_URL,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "apikey": settings.SUPABASE_SERVICE_KEY,
             },
+            timeout=10.0,
         )
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise AuthenticationError("Token has expired")
-    except jwt.JWTClaimsError:
-        raise AuthenticationError("Invalid token claims")
-    except JWTError as e:
-        raise AuthenticationError(f"Invalid token: {str(e)}")
+
+        if response.status_code == 401:
+            raise AuthenticationError("Invalid or expired token")
+
+        if response.status_code != 200:
+            raise AuthenticationError(f"Token verification failed (HTTP {response.status_code})")
+
+        user_data = response.json()
+        user_id = user_data.get("id")
+
+        if not user_id:
+            raise AuthenticationError("Token missing user ID")
+
+        return {
+            "sub": user_id,
+            "email": user_data.get("email"),
+            "aud": "authenticated",
+            "role": user_data.get("role"),
+        }
+    except AuthenticationError:
+        raise
+    except httpx.TimeoutException:
+        raise AuthenticationError("Token verification timed out")
+    except Exception as e:
+        raise AuthenticationError(f"Token verification failed: {str(e)}")
 
 
 def get_user_id_from_token(token: str) -> str:
     """
     Extract user ID from a Supabase JWT token.
-    
-    Args:
-        token: The JWT token
-        
-    Returns:
-        The user ID (sub claim)
     """
     payload = verify_supabase_token(token)
     user_id = payload.get("sub")
-    
+
     if not user_id:
         raise AuthenticationError("Token missing user ID")
-    
+
     return user_id
 
 
@@ -64,12 +81,6 @@ async def get_current_user_id(
 ) -> str:
     """
     FastAPI dependency to get the current authenticated user ID.
-    
-    Args:
-        credentials: The HTTP Bearer credentials
-        
-    Returns:
-        The authenticated user's ID
     """
     token = credentials.credentials
     return get_user_id_from_token(token)
@@ -86,7 +97,7 @@ async def get_optional_user_id(
     """
     if not credentials:
         return None
-    
+
     try:
         return get_user_id_from_token(credentials.credentials)
     except AuthenticationError:
@@ -96,18 +107,11 @@ async def get_optional_user_id(
 def verify_stripe_webhook_signature(payload: bytes, signature: str) -> bool:
     """
     Verify a Stripe webhook signature.
-    
-    Args:
-        payload: The raw request body
-        signature: The Stripe-Signature header
-        
-    Returns:
-        True if valid, raises exception otherwise
     """
     import stripe
-    
+
     stripe.api_key = settings.STRIPE_SECRET_KEY
-    
+
     try:
         stripe.Webhook.construct_event(
             payload,
