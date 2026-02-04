@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AnalyzePage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const { toast } = useToast();
+  const networkErrorCount = useRef(0);
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -136,9 +139,16 @@ export default function AnalyzePage() {
           setStatus('finalizing');
         }
       } catch (err) {
-        // Continue polling on network errors
+        // Show toast after 3 consecutive network errors
+        networkErrorCount.current++;
+        if (networkErrorCount.current === 3) {
+          toast({ type: 'error', message: 'Network issue detected. Retrying...' });
+        }
+        // Continue polling
       }
     }
+    // Reset error count after polling ends
+    networkErrorCount.current = 0;
 
     setError('Analysis timed out. Please try again.');
     setLoading(false);

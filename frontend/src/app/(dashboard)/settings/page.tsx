@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Profile {
   id: string;
@@ -17,11 +18,11 @@ interface Profile {
 export default function SettingsPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fullName, setFullName] = useState('');
-  const [message, setMessage] = useState('');
 
   useEffect(() => {
     loadProfile();
@@ -48,7 +49,6 @@ export default function SettingsPage() {
   const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
-    setMessage('');
 
     const { error } = await supabase
       .from('profiles')
@@ -56,9 +56,9 @@ export default function SettingsPage() {
       .eq('id', profile.id);
 
     if (error) {
-      setMessage('Error saving changes');
+      toast({ type: 'error', message: 'Failed to save changes' });
     } else {
-      setMessage('Changes saved!');
+      toast({ type: 'success', message: 'Changes saved!' });
       setProfile({ ...profile, full_name: fullName });
     }
     setSaving(false);
@@ -80,7 +80,7 @@ export default function SettingsPage() {
         window.location.href = data.url;
       }
     } catch (err) {
-      setMessage('Error opening billing portal');
+      toast({ type: 'error', message: 'Error opening billing portal' });
     }
   };
 
@@ -97,12 +97,6 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Settings</h1>
-
-      {message && (
-        <div className={`mb-6 p-4 rounded-lg ${message.includes('Error') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-          {message}
-        </div>
-      )}
 
       {/* Account */}
       <div className="card mb-6">
