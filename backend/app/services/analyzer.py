@@ -4,7 +4,7 @@ Analyzes landing pages for conversion optimization issues.
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import anthropic
 

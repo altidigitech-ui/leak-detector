@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.api.deps import CurrentUserID, Supabase
 from app.core.limiter import limiter
-from app.core.errors import QuotaExceededError, ValidationError, NotFoundError
+from app.core.errors import QuotaExceededError, NotFoundError
 from app.core.logging import get_logger
 from app.workers.tasks.analyze import analyze_page
 

@@ -2,13 +2,13 @@
 Reports endpoints - Retrieve analysis reports.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUserID, Supabase
-from app.core.errors import NotFoundError, AuthorizationError
+from app.core.errors import NotFoundError
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)

@@ -5,12 +5,10 @@ Analysis task - Main Celery task for analyzing landing pages.
 import asyncio
 from typing import Any, Dict
 
-from celery import current_task
-
 from app.workers.celery import celery_app
 from app.services.supabase import get_supabase_service
 from app.services.scraper import scrape_page, ScrapingError
-from app.services.analyzer import analyze_page
+from app.services.analyzer import analyze_page as analyze_with_claude
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -95,7 +93,7 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
         
         # 5. Analyze with Claude
         try:
-            result = await analyze_page(scraped)
+            result = await analyze_with_claude(scraped)
         except Exception as e:
             logger.error("analysis_failed", analysis_id=analysis_id, error=str(e))
             await supabase.update_analysis_status(
