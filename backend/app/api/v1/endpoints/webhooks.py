@@ -3,9 +3,10 @@ Webhook endpoints - Handle Stripe events.
 """
 
 import stripe
-from fastapi import APIRouter, Request, HTTPException, status
+from fastapi import APIRouter, Request
 
 from app.config import settings
+from app.core.errors import ValidationError
 from app.services.supabase import get_supabase_service
 from app.core.logging import get_logger
 
@@ -32,8 +33,8 @@ async def stripe_webhook(request: Request):
     sig_header = request.headers.get("stripe-signature")
     
     if not sig_header:
-        raise HTTPException(status_code=400, detail="Missing signature")
-    
+        raise ValidationError("Missing webhook signature")
+
     try:
         event = stripe.Webhook.construct_event(
             payload,
@@ -42,10 +43,10 @@ async def stripe_webhook(request: Request):
         )
     except ValueError as e:
         logger.error("webhook_invalid_payload", error=str(e))
-        raise HTTPException(status_code=400, detail="Invalid payload")
+        raise ValidationError("Invalid webhook payload")
     except stripe.error.SignatureVerificationError as e:
         logger.error("webhook_invalid_signature", error=str(e))
-        raise HTTPException(status_code=400, detail="Invalid signature")
+        raise ValidationError("Invalid webhook signature")
     
     logger.info("webhook_received", event_type=event["type"], event_id=event["id"])
     

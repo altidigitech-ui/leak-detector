@@ -24,6 +24,9 @@ playwright==1.41.2
 sentry-sdk[fastapi]==1.40.0
 structlog==24.1.0
 
+# Rate Limiting
+slowapi==0.1.9
+
 # Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
