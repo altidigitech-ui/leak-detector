@@ -5,6 +5,8 @@ NOTE: Run this SQL in Supabase to reset test quota:
 UPDATE profiles SET analyses_used = 0 WHERE id = '99d17cc8-c5fa-416c-8af3-52d55ab24324';
 """
 
+import ipaddress
+import socket
 from typing import List, Optional
 from urllib.parse import urlparse
 
@@ -30,13 +32,17 @@ class CreateAnalysisRequest(BaseModel):
     @field_validator("url")
     @classmethod
     def validate_url(cls, v: str) -> str:
-        """Validate URL format."""
+        """Validate URL format with SSRF prevention."""
         v = v.strip()
-        
+
+        # Max URL length (prevent DoS)
+        if len(v) > 2048:
+            raise ValueError("URL too long (max 2048 characters)")
+
         # Add https if missing
         if not v.startswith(("http://", "https://")):
             v = f"https://{v}"
-        
+
         # Parse and validate
         try:
             parsed = urlparse(v)
@@ -44,7 +50,27 @@ class CreateAnalysisRequest(BaseModel):
                 raise ValueError("Invalid URL")
         except Exception:
             raise ValueError("Invalid URL format")
-        
+
+        # Block non-http(s) schemes (SSRF prevention)
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError("Only HTTP and HTTPS URLs are allowed")
+
+        # Block private/internal IPs (SSRF prevention)
+        hostname = parsed.hostname
+        if hostname:
+            # Block localhost variations
+            if hostname in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+                raise ValueError("Internal URLs are not allowed")
+
+            # Resolve hostname and check for private IPs
+            try:
+                ip = socket.gethostbyname(hostname)
+                ip_obj = ipaddress.ip_address(ip)
+                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved:
+                    raise ValueError("Internal URLs are not allowed")
+            except socket.gaierror:
+                raise ValueError("Could not resolve hostname")
+
         return v
 
 

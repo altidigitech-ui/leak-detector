@@ -5,6 +5,8 @@ Analysis task - Main Celery task for analyzing landing pages.
 import asyncio
 from typing import Any, Dict
 
+from celery.exceptions import SoftTimeLimitExceeded
+
 from app.workers.celery import celery_app
 from app.services.supabase import get_supabase_service
 from app.services.scraper import scrape_page, ScrapingError
@@ -136,6 +138,22 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
             "score": result["score"],
         }
         
+    except SoftTimeLimitExceeded:
+        logger.error(
+            "task_timeout",
+            analysis_id=analysis_id,
+            retry=task.request.retries,
+        )
+
+        # Task timed out - mark as failed immediately (no retry)
+        await supabase.update_analysis_status(
+            analysis_id,
+            status="failed",
+            error_code="TIMEOUT",
+            error_message="Analysis timed out. The page may be too complex or slow to load.",
+        )
+        raise
+
     except AnalysisError as e:
         logger.error(
             "task_error_analysis",
