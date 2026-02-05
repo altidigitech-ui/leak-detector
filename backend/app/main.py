@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 import sentry_sdk
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -52,6 +53,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Security headers middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add security headers to all responses."""
+
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        return response
+
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -60,6 +75,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Security headers (added after CORS so headers are applied to CORS responses)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Rate limiting
 app.state.limiter = limiter
@@ -76,7 +94,20 @@ app.add_exception_handler(Exception, generic_exception_handler)
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint for load balancers."""
-    return {"status": "healthy", "service": "leak-detector-api"}
+    health = {"status": "healthy", "service": "leak-detector-api"}
+
+    # Check Redis connectivity
+    try:
+        from app.workers.celery import celery_app
+        conn = celery_app.connection()
+        conn.ensure_connection(max_retries=1)
+        conn.release()
+        health["redis"] = "connected"
+    except Exception:
+        health["redis"] = "disconnected"
+        health["status"] = "degraded"
+
+    return health
 
 
 # API routes

@@ -3,8 +3,19 @@ Celery configuration and app instance.
 """
 
 from celery import Celery
+import sentry_sdk
+from sentry_sdk.integrations.celery import CeleryIntegration
 
 from app.config import settings
+
+# Initialize Sentry for Celery workers
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.APP_ENV,
+        integrations=[CeleryIntegration()],
+        traces_sample_rate=0.1,
+    )
 
 # Create Celery app
 celery_app = Celery(
