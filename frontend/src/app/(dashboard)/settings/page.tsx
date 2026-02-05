@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -64,64 +65,6 @@ export default function SettingsPage() {
     setSaving(false);
   };
 
-  const handleManageBilling = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/billing/portal`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // If no Stripe customer exists, redirect to pricing to create one
-        if (data.error?.code === 'STRIPE_ERROR') {
-          toast({ type: 'info', message: 'Redirecting to manage your plan...' });
-          router.push('/pricing');
-          return;
-        }
-        throw new Error(data.error?.message || 'Failed to open billing portal');
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      toast({ type: 'error', message: 'Error opening billing portal. Please try again.' });
-    }
-  };
-
-  const handleUpgrade = async (priceId: 'price_pro_monthly' | 'price_agency_monthly') => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/billing/checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ price_id: priceId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Failed to start checkout');
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      toast({ type: 'error', message: 'Error starting checkout. Please try again.' });
-    }
-  };
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push('/login');
@@ -178,13 +121,18 @@ export default function SettingsPage() {
 
       {/* Plan & Billing */}
       <div className="card mb-6">
-        <h2 className="font-semibold text-lg mb-4">Plan & Billing</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-lg">Plan & Billing</h2>
+          <Link href="/billing" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+            Manage &rarr;
+          </Link>
+        </div>
 
-        <div className="p-4 bg-gray-50 rounded-lg mb-4">
+        <div className="p-4 bg-gray-50 rounded-lg">
           <div className="flex justify-between items-center mb-2">
             <span className="font-medium capitalize">{profile?.plan} Plan</span>
             <span className="text-sm text-gray-600">
-              {profile?.analyses_used} / {profile?.analyses_limit} analyses this month
+              {profile?.analyses_used} / {profile?.analyses_limit} analyses
             </span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -195,43 +143,16 @@ export default function SettingsPage() {
               }}
             />
           </div>
-        </div>
 
-        {profile?.plan === 'free' ? (
-          <div className="space-y-3">
-            <p className="text-gray-600">Upgrade to get more analyses and features.</p>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold">Pro</h3>
-                <p className="text-2xl font-bold mt-1">€29<span className="text-sm font-normal text-gray-500">/month</span></p>
-                <ul className="mt-3 space-y-1 text-sm text-gray-600">
-                  <li>✓ 50 analyses/month</li>
-                  <li>✓ Unlimited history</li>
-                  <li>✓ PDF export</li>
-                </ul>
-                <button onClick={() => handleUpgrade('price_pro_monthly')} className="btn-primary w-full mt-4">
-                  Upgrade to Pro
-                </button>
-              </div>
-              <div className="p-4 border rounded-lg border-primary-300 bg-primary-50">
-                <h3 className="font-semibold">Agency</h3>
-                <p className="text-2xl font-bold mt-1">€99<span className="text-sm font-normal text-gray-500">/month</span></p>
-                <ul className="mt-3 space-y-1 text-sm text-gray-600">
-                  <li>✓ 200 analyses/month</li>
-                  <li>✓ White-label reports</li>
-                  <li>✓ API access</li>
-                </ul>
-                <button onClick={() => handleUpgrade('price_agency_monthly')} className="btn-primary w-full mt-4">
-                  Upgrade to Agency
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <button onClick={handleManageBilling} className="btn-secondary">
-            Manage Subscription
-          </button>
-        )}
+          {profile?.plan === 'free' && (
+            <Link
+              href="/billing"
+              className="mt-4 block text-center bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              Upgrade Plan
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Danger Zone */}
