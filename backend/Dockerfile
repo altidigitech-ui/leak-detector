@@ -1,5 +1,4 @@
 FROM python:3.12-slim
-
 WORKDIR /app
 
 # Install system dependencies for Playwright
@@ -14,7 +13,7 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browser deps manually (Debian Trixie compatibility - ttf-unifont and ttf-ubuntu-font-family don't exist)
+# Install Playwright browser deps
 RUN apt-get update && apt-get install -y \
     fonts-unifont \
     fonts-liberation \
@@ -34,22 +33,25 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     libasound2t64 \
     libatspi2.0-0t64 \
-    && rm -rf /var/lib/apt/lists/* \
-    && playwright install chromium
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Playwright path BEFORE installing browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/.browsers
+
+# Install Playwright browsers
+RUN playwright install chromium && chmod -R 755 /app/.browsers
 
 # Copy application code
 COPY . .
 
-# Create non-root user
+# Create non-root user and give access to browsers
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+
 USER appuser
 
-# Expose port
 EXPOSE 8000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1
 
-# Run the application
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
