@@ -136,9 +136,25 @@ async def create_portal_session(
         raise NotFoundError("Profile")
     
     customer_id = profile.get("stripe_customer_id")
+
     if not customer_id:
-        raise StripeError("No active subscription found")
-    
+        # Create Stripe customer for users without one (e.g., manually upgraded)
+        try:
+            customer = stripe.Customer.create(
+                email=profile["email"],
+                metadata={"user_id": user_id},
+            )
+            customer_id = customer.id
+
+            # Save to profile
+            await supabase.update_profile(user_id, {
+                "stripe_customer_id": customer_id,
+            })
+            logger.info("stripe_customer_created", user_id=user_id, customer_id=customer_id)
+        except stripe.error.StripeError as e:
+            logger.error("stripe_customer_creation_failed", error=str(e))
+            raise StripeError("Could not create billing account")
+
     try:
         session = stripe.billing_portal.Session.create(
             customer=customer_id,

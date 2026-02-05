@@ -67,7 +67,7 @@ export default function SettingsPage() {
   const handleManageBilling = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/billing/portal`, {
         method: 'POST',
         headers: {
@@ -76,11 +76,49 @@ export default function SettingsPage() {
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        // If no Stripe customer exists, redirect to pricing to create one
+        if (data.error?.code === 'STRIPE_ERROR') {
+          toast({ type: 'info', message: 'Redirecting to manage your plan...' });
+          router.push('/pricing');
+          return;
+        }
+        throw new Error(data.error?.message || 'Failed to open billing portal');
+      }
+
       if (data.url) {
         window.location.href = data.url;
       }
     } catch (err) {
-      toast({ type: 'error', message: 'Error opening billing portal' });
+      toast({ type: 'error', message: 'Error opening billing portal. Please try again.' });
+    }
+  };
+
+  const handleUpgrade = async (priceId: 'price_pro_monthly' | 'price_agency_monthly') => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/billing/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ price_id: priceId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Failed to start checkout');
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      toast({ type: 'error', message: 'Error starting checkout. Please try again.' });
     }
   };
 
@@ -171,9 +209,9 @@ export default function SettingsPage() {
                   <li>✓ Unlimited history</li>
                   <li>✓ PDF export</li>
                 </ul>
-                <a href="/pricing" className="btn-primary w-full mt-4 block text-center">
-                  Upgrade
-                </a>
+                <button onClick={() => handleUpgrade('price_pro_monthly')} className="btn-primary w-full mt-4">
+                  Upgrade to Pro
+                </button>
               </div>
               <div className="p-4 border rounded-lg border-primary-300 bg-primary-50">
                 <h3 className="font-semibold">Agency</h3>
@@ -183,9 +221,9 @@ export default function SettingsPage() {
                   <li>✓ White-label reports</li>
                   <li>✓ API access</li>
                 </ul>
-                <a href="/pricing" className="btn-primary w-full mt-4 block text-center">
-                  Upgrade
-                </a>
+                <button onClick={() => handleUpgrade('price_agency_monthly')} className="btn-primary w-full mt-4">
+                  Upgrade to Agency
+                </button>
               </div>
             </div>
           </div>

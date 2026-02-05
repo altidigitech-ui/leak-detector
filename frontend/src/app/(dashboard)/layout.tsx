@@ -80,33 +80,36 @@ export default async function DashboardLayout({
 
         {/* Plan info */}
         <div className="p-4 border-t border-slate-800">
-          <div className={`p-4 bg-gradient-to-br ${planColor} rounded-xl`}>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-white/70 uppercase font-medium tracking-wider">Current Plan</p>
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white capitalize">
-                {profile?.plan || 'free'}
-              </span>
+          <Link href="/settings" className="block">
+            <div className={`p-4 bg-gradient-to-br ${planColor} rounded-xl hover:brightness-110 transition-all cursor-pointer`}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-white/70 uppercase font-medium tracking-wider">Current Plan</p>
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white capitalize">
+                  {profile?.plan || 'free'}
+                </span>
+              </div>
+              <p className="text-white font-semibold mb-3">
+                {profile?.analyses_used || 0} / {profile?.analyses_limit || 3} analyses
+              </p>
+              <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-3">
+                <div
+                  className="h-full bg-white rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(100, ((profile?.analyses_used || 0) / (profile?.analyses_limit || 3)) * 100)}%`,
+                  }}
+                />
+              </div>
+              {profile?.plan === 'free' && (
+                <span className="block text-center text-sm bg-white text-slate-900 py-2 px-4 rounded-lg font-medium hover:bg-white/90 transition-colors">
+                  Upgrade Plan
+                </span>
+              )}
+              <p className="text-xs text-white/50 mt-2 flex items-center gap-1">
+                <span>Manage plan</span>
+                <span>&rarr;</span>
+              </p>
             </div>
-            <p className="text-white font-semibold mb-3">
-              {profile?.analyses_used || 0} / {profile?.analyses_limit || 3} analyses
-            </p>
-            <div className="h-2 bg-white/20 rounded-full overflow-hidden mb-3">
-              <div
-                className="h-full bg-white rounded-full transition-all duration-300"
-                style={{
-                  width: `${Math.min(100, ((profile?.analyses_used || 0) / (profile?.analyses_limit || 3)) * 100)}%`,
-                }}
-              />
-            </div>
-            {profile?.plan === 'free' && (
-              <Link
-                href="/pricing"
-                className="block text-center text-sm bg-white text-slate-900 py-2 px-4 rounded-lg font-medium hover:bg-white/90 transition-colors"
-              >
-                Upgrade Plan
-              </Link>
-            )}
-          </div>
+          </Link>
         </div>
       </aside>
 
