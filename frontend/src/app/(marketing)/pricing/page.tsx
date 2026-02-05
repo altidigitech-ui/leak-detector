@@ -1,16 +1,44 @@
-import Link from 'next/link';
-import { Metadata } from 'next';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Pricing',
-  description: 'Simple, transparent pricing for Leak Detector. Choose between Free, Pro (€29/month), or Agency (€99/month) plans.',
-  openGraph: {
-    title: 'Pricing — Leak Detector',
-    description: 'Choose the plan that fits your needs. No hidden fees.',
-  },
-};
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 export default function PricingPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setIsLoggedIn(!!data.session);
+    });
+  }, []);
+
+  const handleCheckout = async (priceId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      // Not logged in, redirect to register
+      window.location.href = `/register?plan=${priceId.replace('price_', '').replace('_monthly', '')}`;
+      return;
+    }
+
+    // Logged in, start checkout
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/billing/checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ price_id: priceId }),
+    });
+
+    const data = await response.json();
+    if (data.url) {
+      window.location.href = data.url;
+    }
+  };
+
   const plans = [
     {
       name: 'Free',
@@ -24,7 +52,6 @@ export default function PricingPage() {
         'Email support',
       ],
       cta: 'Get Started',
-      href: '/register',
       highlighted: false,
     },
     {
@@ -40,7 +67,6 @@ export default function PricingPage() {
         'Priority support',
       ],
       cta: 'Start Pro',
-      href: '/register?plan=pro',
       highlighted: true,
     },
     {
@@ -57,7 +83,6 @@ export default function PricingPage() {
         'Custom branding',
       ],
       cta: 'Start Agency',
-      href: '/register?plan=agency',
       highlighted: false,
     },
   ];
@@ -68,7 +93,7 @@ export default function PricingPage() {
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-primary-600">
-            🔍 Leak Detector
+            Leak Detector
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-gray-600 hover:text-gray-900">
@@ -113,7 +138,7 @@ export default function PricingPage() {
                   <h2 className="text-xl font-semibold text-gray-900">{plan.name}</h2>
                   <p className="text-gray-600 text-sm mt-1">{plan.description}</p>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold">€{plan.price}</span>
+                    <span className="text-4xl font-bold">&euro;{plan.price}</span>
                     <span className="text-gray-500 ml-1">/{plan.period}</span>
                   </div>
                 </div>
@@ -121,22 +146,31 @@ export default function PricingPage() {
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-center gap-2">
-                      <span className="text-green-500">✓</span>
+                      <span className="text-green-500">&check;</span>
                       <span className="text-gray-700">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
-                <Link
-                  href={plan.href}
-                  className={`block text-center py-3 rounded-lg font-medium transition-colors ${
-                    plan.highlighted
-                      ? 'bg-primary-600 text-white hover:bg-primary-700'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
+                {plan.name === 'Free' ? (
+                  <Link
+                    href="/register"
+                    className="block text-center py-3 rounded-lg font-medium transition-colors bg-gray-100 text-gray-900 hover:bg-gray-200"
+                  >
+                    {plan.cta}
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => handleCheckout(plan.name === 'Pro' ? 'price_pro_monthly' : 'price_agency_monthly')}
+                    className={`block w-full text-center py-3 rounded-lg font-medium transition-colors ${
+                      plan.highlighted
+                        ? 'bg-primary-600 text-white hover:bg-primary-700'
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                    }`}
+                  >
+                    {plan.cta}
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -203,7 +237,7 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p>© 2026 Leak Detector. All rights reserved.</p>
+          <p>&copy; 2026 Leak Detector. All rights reserved.</p>
         </div>
       </footer>
     </div>
