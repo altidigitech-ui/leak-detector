@@ -9,6 +9,7 @@ from app.workers.celery import celery_app
 from app.services.supabase import get_supabase_service
 from app.services.scraper import scrape_page, ScrapingError
 from app.services.analyzer import analyze_page as analyze_with_claude
+from app.core.errors import AnalysisError
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -16,12 +17,10 @@ logger = get_logger(__name__)
 
 @celery_app.task(
     bind=True,
-    max_retries=2,
-    default_retry_delay=30,
+    max_retries=1,
+    default_retry_delay=5,
     soft_time_limit=180,
     time_limit=240,
-    autoretry_for=(Exception,),
-    retry_backoff=True,
 )
 def analyze_page_task(self, analysis_id: str) -> Dict[str, Any]:
     """
@@ -118,8 +117,11 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
                 "image_count": scraped.image_count,
             },
         )
-        
-        # 7. Update analysis status to completed
+
+        # 7. Increment quota ONLY on success (moved from endpoint)
+        await supabase.increment_analyses_used(analysis["user_id"])
+
+        # 8. Update analysis status to completed
         await supabase.update_analysis_status(analysis_id, "completed")
         
         logger.info(
@@ -134,6 +136,27 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
             "score": result["score"],
         }
         
+    except AnalysisError as e:
+        logger.error(
+            "task_error_analysis",
+            analysis_id=analysis_id,
+            error=str(e),
+            retry=task.request.retries,
+        )
+
+        # Retry only for AnalysisError (Claude API issues)
+        if task.request.retries < task.max_retries:
+            raise task.retry(exc=e, countdown=5)
+
+        # Max retries reached - mark as failed
+        await supabase.update_analysis_status(
+            analysis_id,
+            status="failed",
+            error_code="ANALYSIS_FAILED",
+            error_message=f"Analysis failed after {task.max_retries + 1} attempts: {str(e)}",
+        )
+        raise
+
     except Exception as e:
         logger.error(
             "task_error",
@@ -141,16 +164,14 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
             error=str(e),
             retry=task.request.retries,
         )
-        
-        # Update status to failed if max retries reached
-        if task.request.retries >= task.max_retries:
-            await supabase.update_analysis_status(
-                analysis_id,
-                status="failed",
-                error_code="ANALYSIS_FAILED",
-                error_message=f"Task failed after {task.max_retries} retries: {str(e)}",
-            )
-        
+
+        # Non-retryable errors - mark as failed immediately
+        await supabase.update_analysis_status(
+            analysis_id,
+            status="failed",
+            error_code="TASK_FAILED",
+            error_message=str(e),
+        )
         raise
 
 
