@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from '@/hooks/use-toast';
 import { ToastContainer } from '@/components/ui/toast';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://leakdetector.tech'),
@@ -12,7 +9,7 @@ export const metadata: Metadata = {
     default: 'Leak Detector — Find What Makes Visitors Leave Your Page',
     template: '%s — Leak Detector',
   },
-  description: 'AI-powered landing page analysis. Identify conversion leaks and get actionable recommendations in 30 seconds.',
+  description: 'AI-powered landing page analysis. Identify conversion leaks and get actionable recommendations in 60 seconds.',
   keywords: ['landing page', 'conversion', 'CRO', 'optimization', 'analysis', 'AI'],
   openGraph: {
     type: 'website',
@@ -20,12 +17,12 @@ export const metadata: Metadata = {
     url: 'https://leakdetector.tech',
     siteName: 'Leak Detector',
     title: 'Leak Detector — Find What Makes Visitors Leave Your Page',
-    description: 'AI-powered landing page analysis. Get actionable recommendations in 30 seconds.',
+    description: 'AI-powered landing page analysis. Get actionable recommendations in 60 seconds.',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Leak Detector',
-    description: 'AI-powered landing page analysis. Get actionable recommendations in 30 seconds.',
+    description: 'AI-powered landing page analysis. Get actionable recommendations in 60 seconds.',
   },
   icons: {
     icon: '/favicon.svg',
@@ -38,8 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className="scroll-smooth">
+      <body className="font-sans antialiased">
         <ToastProvider>
           {children}
           <ToastContainer />
