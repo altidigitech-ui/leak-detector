@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
   );
   const isAuthenticated = hasFlag || hasSupabaseCookie;
 
-  const protectedRoutes = ['/dashboard', '/settings', '/analyze', '/reports'];
+  const protectedRoutes = ['/dashboard', '/settings', '/analyze', '/reports', '/billing'];
   const authRoutes = ['/login', '/register', '/forgot-password'];
 
   const isProtectedRoute = protectedRoutes.some((route) =>

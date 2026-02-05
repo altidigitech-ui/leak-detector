@@ -69,6 +69,9 @@ export default async function DashboardLayout({
           <NavLink href="/reports" icon="📋">
             Reports
           </NavLink>
+          <NavLink href="/billing" icon="💳">
+            Billing
+          </NavLink>
         </nav>
 
         {/* Settings */}
@@ -80,8 +83,8 @@ export default async function DashboardLayout({
 
         {/* Plan info */}
         <div className="p-4 border-t border-slate-800">
-          <Link href="/settings" className="block">
-            <div className={`p-4 bg-gradient-to-br ${planColor} rounded-xl hover:brightness-110 transition-all cursor-pointer`}>
+          <Link href="/billing" className="block">
+            <div className={`p-4 bg-gradient-to-br ${planColor} rounded-xl hover:brightness-110 transition-all cursor-pointer group`}>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-white/70 uppercase font-medium tracking-wider">Current Plan</p>
                 <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full text-white capitalize">
@@ -104,9 +107,9 @@ export default async function DashboardLayout({
                   Upgrade Plan
                 </span>
               )}
-              <p className="text-xs text-white/50 mt-2 flex items-center gap-1">
-                <span>Manage plan</span>
-                <span>&rarr;</span>
+              <p className="text-xs text-slate-400 mt-3 flex items-center gap-1 group-hover:text-slate-300 transition-colors">
+                Manage billing
+                <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
               </p>
             </div>
           </Link>

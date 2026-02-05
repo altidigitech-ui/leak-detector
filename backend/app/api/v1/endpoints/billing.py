@@ -100,8 +100,8 @@ async def create_checkout_session(
                 "price": stripe_price_id,
                 "quantity": 1,
             }],
-            success_url=f"{settings.FRONTEND_URL}/settings?success=true",
-            cancel_url=f"{settings.FRONTEND_URL}/pricing?canceled=true",
+            success_url=f"{settings.FRONTEND_URL}/billing?success=true",
+            cancel_url=f"{settings.FRONTEND_URL}/billing?canceled=true",
             metadata={
                 "user_id": user_id,
             },
@@ -158,7 +158,7 @@ async def create_portal_session(
     try:
         session = stripe.billing_portal.Session.create(
             customer=customer_id,
-            return_url=f"{settings.FRONTEND_URL}/settings",
+            return_url=f"{settings.FRONTEND_URL}/billing",
         )
         
         logger.info("portal_session_created", user_id=user_id)
