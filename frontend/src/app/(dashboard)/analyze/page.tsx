@@ -79,15 +79,16 @@ export default function AnalyzePage() {
   };
 
   const pollAnalysis = async (analysisId: string) => {
-    const maxAttempts = 240; // 240 seconds (4 minutes) max
+    const maxAttempts = 150; // 150 attempts * 2s = 300 seconds (5 minutes) max
+    const pollInterval = 2000; // Poll every 2 seconds
     let attempts = 0;
 
     while (attempts < maxAttempts) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
       attempts++;
 
-      // Update progress
-      setProgress(40 + Math.min(50, attempts));
+      // Update progress (scale to 150 attempts)
+      setProgress(40 + Math.min(50, Math.floor(attempts / 3)));
 
       try {
         const response = await fetch(
@@ -130,13 +131,13 @@ export default function AnalyzePage() {
           return;
         }
 
-        // Update status message
+        // Update status message (adjusted for 2s polling interval)
         if (attempts < 10) {
-          setStatus('scraping');
-        } else if (attempts < 30) {
-          setStatus('analyzing');
+          setStatus('scraping'); // First ~20 seconds
+        } else if (attempts < 60) {
+          setStatus('analyzing'); // Up to ~2 minutes
         } else {
-          setStatus('finalizing');
+          setStatus('finalizing'); // After ~2 minutes
         }
       } catch (err) {
         // Show toast after 3 consecutive network errors
