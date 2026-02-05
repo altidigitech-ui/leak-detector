@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     
     # Anthropic
     ANTHROPIC_API_KEY: str = ""
-    ANTHROPIC_MODEL: str = "claude-sonnet-4-5-20250929"
+    ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
     
     # Playwright
     PLAYWRIGHT_TIMEOUT: int = 30000

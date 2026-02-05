@@ -1,5 +1,8 @@
 """
 Analyses endpoints - Create and manage landing page analyses.
+
+NOTE: Run this SQL in Supabase to reset test quota:
+UPDATE profiles SET analyses_used = 0 WHERE id = '99d17cc8-c5fa-416c-8af3-52d55ab24324';
 """
 
 from typing import List, Optional
@@ -106,10 +109,10 @@ async def create_analysis(
         user_id=user_id,
         url=body.url,
     )
-    
-    # Increment quota
-    await supabase.increment_analyses_used(user_id)
-    
+
+    # NOTE: Quota is incremented in the worker ONLY on successful analysis
+    # This prevents wasting credits on failed scraping/analysis attempts
+
     # Queue the analysis task (graceful if worker not available)
     try:
         analyze_page_task.delay(analysis["id"])

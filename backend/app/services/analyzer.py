@@ -99,7 +99,9 @@ Réponds UNIQUEMENT en JSON valide avec cette structure exacte (pas de markdown,
   ]
 }
 
-Sois précis, actionnable et constructif. Ne pas inventer de problèmes qui n'existent pas."""
+Sois précis, actionnable et constructif. Ne pas inventer de problèmes qui n'existent pas.
+
+CRITICAL: Your response must be ONLY valid JSON. No markdown, no code blocks, no explanations before or after the JSON. Start with { and end with }."""
 
 USER_PROMPT_TEMPLATE = """Analyse cette landing page pour identifier les problèmes de conversion :
 
@@ -136,9 +138,9 @@ async def analyze_page(scraped: ScrapedPage) -> Dict[str, Any]:
     """
     logger.info("analysis_started", url=scraped.url)
     
-    # Prepare the prompt
-    html_summary = summarize_html(scraped.html, max_length=4000)
-    text_content = scraped.text_content[:3000] if scraped.text_content else ""
+    # Prepare the prompt (reduced lengths for faster processing)
+    html_summary = summarize_html(scraped.html, max_length=2000)
+    text_content = scraped.text_content[:2000] if scraped.text_content else ""
     
     user_prompt = USER_PROMPT_TEMPLATE.format(
         url=scraped.url,
@@ -156,7 +158,7 @@ async def analyze_page(scraped: ScrapedPage) -> Dict[str, Any]:
         # Call Claude API with prefill to force clean JSON output
         message = client.messages.create(
             model=settings.ANTHROPIC_MODEL,
-            max_tokens=4096,
+            max_tokens=3000,
             system=SYSTEM_PROMPT,
             messages=[
                 {"role": "user", "content": user_prompt},

@@ -89,6 +89,10 @@ class SupabaseService:
     async def increment_analyses_used(self, user_id):
         self._rpc("increment_analyses_used", {"p_user_id": user_id})
 
+    async def decrement_analyses_used(self, user_id):
+        """Decrement quota - safety net for edge cases (requires RPC in Supabase)."""
+        self._rpc("decrement_analyses_used", {"p_user_id": user_id})
+
     async def reset_analyses_used(self, user_id):
         await self.update_profile(user_id, {"analyses_used": 0})
 
