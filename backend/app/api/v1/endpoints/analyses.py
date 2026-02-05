@@ -12,7 +12,7 @@ from app.api.deps import CurrentUserID, Supabase
 from app.core.limiter import limiter
 from app.core.errors import QuotaExceededError, NotFoundError
 from app.core.logging import get_logger
-from app.workers.tasks.analyze import analyze_page
+from app.workers.tasks.analyze import analyze_page_task
 
 logger = get_logger(__name__)
 
@@ -112,7 +112,7 @@ async def create_analysis(
     
     # Queue the analysis task (graceful if worker not available)
     try:
-        analyze_page.delay(analysis["id"])
+        analyze_page_task.delay(analysis["id"])
     except Exception as e:
         logger.warning("celery_dispatch_failed", analysis_id=analysis["id"], error=str(e))
     
