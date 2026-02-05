@@ -4,6 +4,7 @@ Analyzes landing pages for conversion optimization issues.
 """
 
 import json
+import re
 from typing import Any, Dict, List
 
 import anthropic
@@ -152,18 +153,19 @@ async def analyze_page(scraped: ScrapedPage) -> Dict[str, Any]:
     )
     
     try:
-        # Call Claude API
+        # Call Claude API with prefill to force clean JSON output
         message = client.messages.create(
             model=settings.ANTHROPIC_MODEL,
             max_tokens=4096,
             system=SYSTEM_PROMPT,
             messages=[
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": user_prompt},
+                {"role": "assistant", "content": "{"},
             ],
         )
-        
-        # Extract response text
-        response_text = message.content[0].text
+
+        # Extract response text (prepend "{" since we used it as prefill)
+        response_text = "{" + message.content[0].text
         
         # Parse JSON response
         result = parse_analysis_response(response_text)
@@ -208,9 +210,47 @@ def parse_analysis_response(response_text: str) -> Dict[str, Any]:
         if text.endswith("```"):
             text = text[:-3]
         text = text.strip()
-        
-        # Parse JSON
-        result = json.loads(text)
+
+        # Try parsing JSON with multiple fallback strategies
+        result = None
+        parse_error = None
+
+        # Strategy 1: Direct parse
+        try:
+            result = json.loads(text)
+        except json.JSONDecodeError as e:
+            parse_error = e
+
+        # Strategy 2: Extract JSON with regex
+        if result is None:
+            try:
+                match = re.search(r'\{[\s\S]*\}', text)
+                if match:
+                    result = json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+
+        # Strategy 3: Clean common issues (smart quotes, control chars)
+        if result is None:
+            try:
+                cleaned = text
+                # Replace smart/curly quotes with straight quotes
+                cleaned = cleaned.replace('"', '"').replace('"', '"')
+                cleaned = cleaned.replace(''', "'").replace(''', "'")
+                # Remove control characters except newlines and tabs
+                cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', cleaned)
+                result = json.loads(cleaned)
+            except json.JSONDecodeError:
+                pass
+
+        # If all strategies failed, raise the original error
+        if result is None:
+            logger.error(
+                "json_parse_failed_all_strategies",
+                response_preview=response_text[:500],
+                error=str(parse_error),
+            )
+            raise parse_error
         
         # Validate structure
         if not isinstance(result.get("score"), (int, float)):
@@ -252,7 +292,7 @@ def parse_analysis_response(response_text: str) -> Dict[str, Any]:
         return result
         
     except json.JSONDecodeError as e:
-        logger.error("json_parse_error", error=str(e), response_preview=response_text[:200])
+        logger.error("json_parse_error", error=str(e), response_preview=response_text[:500])
         raise AnalysisError(f"Failed to parse analysis response: {str(e)}")
     except ValueError as e:
         logger.error("validation_error", error=str(e))
