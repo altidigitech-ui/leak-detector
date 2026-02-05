@@ -79,7 +79,7 @@ export default function AnalyzePage() {
   };
 
   const pollAnalysis = async (analysisId: string) => {
-    const maxAttempts = 60; // 60 seconds max
+    const maxAttempts = 240; // 240 seconds (4 minutes) max
     let attempts = 0;
 
     while (attempts < maxAttempts) {

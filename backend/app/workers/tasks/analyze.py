@@ -18,8 +18,8 @@ logger = get_logger(__name__)
     bind=True,
     max_retries=2,
     default_retry_delay=30,
-    soft_time_limit=60,
-    time_limit=90,
+    soft_time_limit=180,
+    time_limit=240,
     autoretry_for=(Exception,),
     retry_backoff=True,
 )
