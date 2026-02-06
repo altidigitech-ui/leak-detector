@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     STRIPE_PRICE_PRO_MONTHLY: str = ""
     STRIPE_PRICE_AGENCY_MONTHLY: str = ""
     
+    # Brevo (Email)
+    BREVO_API_KEY: str = ""
+
     # Anthropic
     ANTHROPIC_API_KEY: str = ""
     ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
