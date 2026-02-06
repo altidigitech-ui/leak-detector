@@ -156,6 +156,44 @@ class SupabaseService:
         response.raise_for_status()
         return f"{settings.SUPABASE_URL}/storage/v1/object/public/screenshots/{path}"
 
+    # ===== Admin methods =====
+
+    async def admin_get_all_profiles(self) -> List[Dict[str, Any]]:
+        return self._get("profiles", params={"select": "id,email,plan,analyses_used,analyses_limit,created_at", "order": "created_at.desc"})
+
+    async def admin_get_all_analyses(self) -> List[Dict[str, Any]]:
+        return self._get("analyses", params={"select": "id,url,status,user_id,created_at", "order": "created_at.desc"})
+
+    async def admin_get_all_report_scores(self) -> List[Dict[str, Any]]:
+        return self._get("reports", params={"select": "score,analysis_id"})
+
+    async def admin_get_active_subscriptions(self) -> List[Dict[str, Any]]:
+        return self._get("subscriptions", params={"select": "*", "status": "eq.active"})
+
+    async def admin_get_recent_analyses(self, limit: int = 10) -> List[Dict[str, Any]]:
+        return self._get("analyses", params={"select": "id,url,status,user_id,created_at", "order": "created_at.desc", "limit": str(limit)})
+
+    async def admin_get_profiles_by_ids(self, user_ids: List[str]) -> List[Dict[str, Any]]:
+        if not user_ids:
+            return []
+        ids_param = ",".join(f'"{uid}"' for uid in user_ids)
+        return self._get("profiles", params={"select": "id,email", "id": f"in.({ids_param})"})
+
+    async def admin_get_reports_by_analysis_ids(self, analysis_ids: List[str]) -> List[Dict[str, Any]]:
+        if not analysis_ids:
+            return []
+        ids_param = ",".join(f'"{aid}"' for aid in analysis_ids)
+        return self._get("reports", params={"select": "analysis_id,score", "analysis_id": f"in.({ids_param})"})
+
+    async def admin_get_profiles_paginated(self, limit: int = 50, offset: int = 0) -> Tuple[List[Dict[str, Any]], int]:
+        return self._get("profiles", params={"select": "*", "order": "created_at.desc"}, count=True, range_header=f"{offset}-{offset + limit - 1}")
+
+    async def admin_get_analyses_paginated(self, limit: int = 50, offset: int = 0, status: Optional[str] = None) -> Tuple[List[Dict[str, Any]], int]:
+        params = {"select": "*", "order": "created_at.desc"}
+        if status:
+            params["status"] = f"eq.{status}"
+        return self._get("analyses", params=params, count=True, range_header=f"{offset}-{offset + limit - 1}")
+
 
 _supabase_service: Optional[SupabaseService] = None
 

@@ -168,17 +168,33 @@ async def analyze_page(scraped: ScrapedPage) -> Dict[str, Any]:
 
         # Extract response text (prepend "{" since we used it as prefill)
         response_text = "{" + message.content[0].text
-        
+
+        # Log token usage
+        usage = message.usage
+        tokens_input = usage.input_tokens if usage else 0
+        tokens_output = usage.output_tokens if usage else 0
+        logger.info(
+            "claude_usage",
+            input_tokens=tokens_input,
+            output_tokens=tokens_output,
+        )
+
         # Parse JSON response
         result = parse_analysis_response(response_text)
-        
+
+        # Attach token usage to result for downstream tracking
+        result["_usage"] = {
+            "input_tokens": tokens_input,
+            "output_tokens": tokens_output,
+        }
+
         logger.info(
             "analysis_completed",
             url=scraped.url,
             score=result.get("score"),
             categories_count=len(result.get("categories", [])),
         )
-        
+
         return result
         
     except anthropic.APIError as e:

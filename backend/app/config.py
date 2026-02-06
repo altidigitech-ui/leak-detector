@@ -62,6 +62,13 @@ class Settings(BaseSettings):
     QUOTA_FREE: int = 3
     QUOTA_PRO: int = 50
     QUOTA_AGENCY: int = 200
+
+    # Admin
+    ADMIN_EMAILS: List[str] = ["altidigitech@gmail.com"]
+
+    # Cost tracking (estimated costs per unit)
+    COST_PER_ANALYSIS_CLAUDE: float = 0.02  # ~2K tokens in + 2K out
+    COST_PER_ANALYSIS_INFRA: float = 0.01   # Railway compute
     
     @property
     def is_production(self) -> bool:

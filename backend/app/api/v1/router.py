@@ -4,7 +4,7 @@ API v1 Router - Aggregates all endpoint routers.
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import analyses, reports, billing, webhooks
+from app.api.v1.endpoints import admin, analyses, reports, billing, webhooks
 
 api_router = APIRouter()
 
@@ -31,4 +31,10 @@ api_router.include_router(
     webhooks.router,
     prefix="/webhooks",
     tags=["Webhooks"],
+)
+
+api_router.include_router(
+    admin.router,
+    prefix="/admin",
+    tags=["Admin"],
 )

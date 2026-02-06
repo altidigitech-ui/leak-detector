@@ -21,6 +21,8 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single();
 
+  const isAdmin = user.email === 'altidigitech@gmail.com';
+
   const planColors = {
     free: 'from-slate-600 to-slate-700',
     pro: 'from-primary-600 to-primary-700',
@@ -72,6 +74,11 @@ export default async function DashboardLayout({
           <NavLink href="/billing" icon="💳">
             Billing
           </NavLink>
+          {isAdmin && (
+            <NavLink href="/admin" icon="🛡️">
+              Admin
+            </NavLink>
+          )}
         </nav>
 
         {/* Settings */}
