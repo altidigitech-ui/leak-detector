@@ -12,6 +12,7 @@ from app.services.supabase import get_supabase_service
 from app.services.scraper import scrape_page, ScrapingError
 from app.services.analyzer import analyze_page as analyze_with_claude
 from app.core.errors import AnalysisError
+from app.services.email import send_analysis_complete_email
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -123,7 +124,29 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
         # 7. Increment quota ONLY on success (moved from endpoint)
         await supabase.increment_analyses_used(analysis["user_id"])
 
-        # 8. Update analysis status to completed
+        # 8. Send email notification
+        try:
+            profile = await supabase.get_profile(analysis["user_id"])
+            if profile and profile.get("email"):
+                critical_issues = sum(
+                    1 for cat in result.get("categories", [])
+                    for issue in cat.get("issues", [])
+                    if issue.get("severity") == "critical"
+                )
+                await send_analysis_complete_email(
+                    email=profile["email"],
+                    name=profile.get("full_name"),
+                    url=url,
+                    score=result["score"],
+                    report_id=report["id"],
+                    critical_count=critical_issues,
+                    remaining=max(0, profile["analyses_limit"] - profile["analyses_used"]),
+                )
+        except Exception as e:
+            logger.warning("analysis_email_failed", error=str(e))
+            # Don't fail the task if email fails
+
+        # 9. Update analysis status to completed
         await supabase.update_analysis_status(analysis_id, "completed")
         
         logger.info(

@@ -2,12 +2,15 @@
 Webhook endpoints - Handle Stripe events.
 """
 
+from datetime import datetime
+
 import stripe
 from fastapi import APIRouter, Request
 
 from app.config import settings
 from app.core.errors import ValidationError
 from app.services.supabase import get_supabase_service
+from app.services.email import send_welcome_email, send_subscription_email, add_contact_to_list
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -127,6 +130,22 @@ async def handle_checkout_completed(supabase, session: dict):
     )
     
     logger.info("subscription_activated", user_id=profile["id"], plan=plan)
+
+    # Send subscription confirmation email
+    try:
+        period_end = datetime.fromtimestamp(
+            subscription["current_period_end"]
+        ).strftime("%B %d, %Y")
+
+        await send_subscription_email(
+            email=profile["email"],
+            name=profile.get("full_name"),
+            plan=plan,
+            analyses_limit=get_limit_for_plan(plan),
+            next_billing_date=period_end,
+        )
+    except Exception as e:
+        logger.warning("subscription_email_failed", error=str(e))
 
 
 async def handle_subscription_created(supabase, subscription: dict):
@@ -257,3 +276,29 @@ def get_limit_for_plan(plan: str) -> int:
         "agency": settings.QUOTA_AGENCY,
     }
     return limits.get(plan, settings.QUOTA_FREE)
+
+
+@router.post("/auth")
+async def handle_auth_webhook(request: Request):
+    """
+    Handle Supabase Auth webhooks.
+    Triggered when a new user signs up.
+    """
+    try:
+        payload = await request.json()
+        event_type = payload.get("type")
+
+        if event_type == "INSERT" and payload.get("table") == "users":
+            record = payload.get("record", {})
+            email = record.get("email")
+
+            if email:
+                # Send welcome email
+                await send_welcome_email(email=email, name=None)
+                # Add to marketing list
+                await add_contact_to_list(email=email)
+
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error("auth_webhook_error", error=str(e))
+        return {"status": "error"}
