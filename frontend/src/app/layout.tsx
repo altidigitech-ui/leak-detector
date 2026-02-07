@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { ToastProvider } from '@/hooks/use-toast';
 import { ToastContainer } from '@/components/ui/toast';
@@ -41,6 +42,7 @@ export default function RootLayout({
           {children}
           <ToastContainer />
         </ToastProvider>
+        <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
       </body>
     </html>
   );

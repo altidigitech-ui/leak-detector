@@ -1,32 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  // DEBUG ROUTE — hit /debug-auth in browser after login to see what cookies the server receives
-  if (request.nextUrl.pathname === '/debug-auth') {
-    const allCookies = request.cookies.getAll();
-    return NextResponse.json({
-      totalCookies: allCookies.length,
-      cookieNames: allCookies.map((c) => c.name),
-      cookies: allCookies.map((c) => ({
-        name: c.name,
-        valueLength: c.value.length,
-        valuePreview: c.value.substring(0, 50),
-      })),
-      headers: {
-        cookie: request.headers.get('cookie')?.substring(0, 200) || 'NO COOKIE HEADER',
-      },
-    });
-  }
-
-  // Check for auth — try both: flag cookie AND Supabase cookie
-  const hasFlag = request.cookies.get('auth-status')?.value === '1';
+  // Check for auth via Supabase cookie
   const allCookies = request.cookies.getAll();
   const hasSupabaseCookie = allCookies.some(
     (c) => c.name.startsWith('sb-') && c.name.includes('auth-token')
   );
-  const isAuthenticated = hasFlag || hasSupabaseCookie;
+  const isAuthenticated = hasSupabaseCookie;
 
-  const protectedRoutes = ['/dashboard', '/settings', '/analyze', '/reports', '/billing'];
+  const protectedRoutes = ['/dashboard', '/settings', '/analyze', '/reports', '/billing', '/admin'];
   const authRoutes = ['/login', '/register', '/forgot-password'];
 
   const isProtectedRoute = protectedRoutes.some((route) =>
