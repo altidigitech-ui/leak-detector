@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Turnstile } from '@/components/ui/turnstile';
+import { analytics } from '@/lib/analytics';
 
 // Cloudflare Turnstile CAPTCHA setup:
 // 1. Go to https://dash.cloudflare.com → Turnstile → Add Site
@@ -50,6 +51,7 @@ export default function RegisterPage() {
         return;
       }
 
+      analytics.signupCompleted('email');
       window.location.href = '/dashboard';
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -59,6 +61,7 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignup = async () => {
+    analytics.signupCompleted('google');
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: 'google',

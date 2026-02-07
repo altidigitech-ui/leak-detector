@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { apiClient, ApiError } from '@/lib/api';
+import { analytics } from '@/lib/analytics';
 import type { Plan } from '@/types';
 
 interface PdfDownloadButtonProps {
@@ -48,6 +49,7 @@ export function PdfDownloadButton({ reportId, userPlan }: PdfDownloadButtonProps
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      analytics.pdfDownloaded();
     } catch (err) {
       if (err instanceof ApiError && err.status === 403) {
         setError('PDF export requires a Pro plan.');
