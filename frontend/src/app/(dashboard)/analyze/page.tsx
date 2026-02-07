@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { analytics } from '@/lib/analytics';
 
 export default function AnalyzePage() {
   const router = useRouter();
@@ -42,6 +43,8 @@ export default function AnalyzePage() {
 
       setStatus('submitting');
       setProgress(20);
+
+      analytics.analysisStarted(validUrl);
 
       // Create analysis via API
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/analyses`, {
@@ -106,6 +109,7 @@ export default function AnalyzePage() {
         if (analysis.status === 'completed') {
           setProgress(100);
           setStatus('completed');
+          analytics.analysisCompleted(url, analysis.score ?? 0);
 
           // Get report and redirect
           const reportResponse = await fetch(

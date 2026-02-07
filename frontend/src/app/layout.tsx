@@ -43,6 +43,12 @@ export default function RootLayout({
           <ToastContainer />
         </ToastProvider>
         <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+        <Script
+          defer
+          data-domain="leakdetector.tech"
+          src="https://plausible.io/js/script.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

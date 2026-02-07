@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { analytics } from '@/lib/analytics';
 
 interface BillingData {
   plan: string;
@@ -80,6 +81,10 @@ export default function BillingPage() {
   };
 
   const handleUpgrade = async (priceId: string) => {
+    const plan = plans.find(p => p.priceId === priceId);
+    if (plan) {
+      analytics.checkoutInitiated(plan.id);
+    }
     setActionLoading(priceId);
     try {
       const { data: { session } } = await supabase.auth.getSession();
