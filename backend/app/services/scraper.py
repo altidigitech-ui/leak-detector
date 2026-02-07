@@ -5,8 +5,11 @@ Captures HTML content and screenshots of landing pages.
 
 import asyncio
 from dataclasses import dataclass
+from io import BytesIO
 from typing import Optional
 from urllib.parse import urlparse
+
+from PIL import Image
 
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
 
@@ -172,11 +175,20 @@ async def scrape_page(url: str) -> ScrapedPage:
                 }
             """)
             
-            # Screenshot
-            screenshot = await page.screenshot(
-                full_page=True,
+            # Screenshot — capture viewport + first fold, convert to WebP for compression
+            page_height = await page.evaluate("() => document.documentElement.scrollHeight")
+            clip_height = min(page_height, 3000)
+
+            raw_screenshot = await page.screenshot(
+                clip={"x": 0, "y": 0, "width": VIEWPORT_WIDTH, "height": clip_height},
                 type="png",
             )
+
+            # Convert to WebP for ~80% size reduction
+            img = Image.open(BytesIO(raw_screenshot))
+            webp_buffer = BytesIO()
+            img.save(webp_buffer, format="WebP", quality=80)
+            screenshot = webp_buffer.getvalue()
             
             logger.info(
                 "scraping_completed",

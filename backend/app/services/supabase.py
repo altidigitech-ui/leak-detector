@@ -170,8 +170,8 @@ class SupabaseService:
 
     async def upload_screenshot(self, analysis_id, data):
         await self._ensure_client()
-        path = f"screenshots/{analysis_id}.png"
-        response = await self._client.post(f"{self._storage_url}/object/screenshots/{path}", content=data, headers={"Content-Type": "image/png", "x-upsert": "true"})
+        path = f"screenshots/{analysis_id}.webp"
+        response = await self._client.post(f"{self._storage_url}/object/screenshots/{path}", content=data, headers={"Content-Type": "image/webp", "x-upsert": "true"})
         response.raise_for_status()
         return f"{settings.SUPABASE_URL}/storage/v1/object/public/screenshots/{path}"
 
