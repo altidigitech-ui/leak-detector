@@ -37,10 +37,22 @@ async def lifespan(app: FastAPI):
     setup_logging()
     setup_sentry()
     logger.info("application_started", environment=settings.APP_ENV)
-    
+
     yield
-    
+
     # Shutdown
+    try:
+        from app.services.supabase import get_supabase_service
+        await get_supabase_service().close()
+    except Exception as e:
+        logger.warning("supabase_client_close_failed", error=str(e))
+
+    try:
+        from app.core.security import close_auth_client
+        await close_auth_client()
+    except Exception as e:
+        logger.warning("auth_client_close_failed", error=str(e))
+
     logger.info("application_stopped")
 
 

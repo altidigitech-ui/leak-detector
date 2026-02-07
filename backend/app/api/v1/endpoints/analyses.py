@@ -118,26 +118,25 @@ async def create_analysis(
     """
     logger.info("analysis_create_requested", user_id=user_id, url_domain=urlparse(body.url).netloc)
 
-    # Get user profile and check quota
+    # Get user profile (needed for error context)
     profile = await supabase.get_profile(user_id)
     if not profile:
         raise NotFoundError("Profile")
-    
-    # Check quota
-    if profile["analyses_used"] >= profile["analyses_limit"]:
+
+    # Atomically check quota, reset if new month, and increment
+    # The RPC use_analysis_quota handles: monthly reset + quota check + increment in one transaction
+    quota_ok = await supabase.use_analysis_quota(user_id)
+    if not quota_ok:
         raise QuotaExceededError(
             limit=profile["analyses_limit"],
             plan=profile["plan"],
         )
-    
+
     # Create analysis record
     analysis = await supabase.create_analysis(
         user_id=user_id,
         url=body.url,
     )
-
-    # NOTE: Quota is incremented in the worker ONLY on successful analysis
-    # This prevents wasting credits on failed scraping/analysis attempts
 
     # Queue the analysis task (graceful if worker not available)
     try:

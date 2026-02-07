@@ -22,13 +22,11 @@ logger = get_logger(__name__)
     bind=True,
     max_retries=1,
     default_retry_delay=5,
-    soft_time_limit=180,
-    time_limit=240,
 )
 def analyze_page_task(self, analysis_id: str) -> Dict[str, Any]:
     """
     Main task for analyzing a landing page.
-    
+
     Steps:
     1. Fetch analysis record from DB
     2. Update status to 'processing'
@@ -37,37 +35,37 @@ def analyze_page_task(self, analysis_id: str) -> Dict[str, Any]:
     5. Analyze with Claude API
     6. Create report in DB
     7. Update analysis status to 'completed'
-    
+
     Args:
         analysis_id: UUID of the analysis record
-        
+
     Returns:
         Dict with report_id and score
     """
     logger.info("task_started", analysis_id=analysis_id, task_id=self.request.id)
-    
+
     # Run async code in sync context
     return asyncio.run(_analyze_page_async(self, analysis_id))
 
 
 async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
     """Async implementation of the analysis task."""
-    
+
     supabase = get_supabase_service()
-    
+
     try:
         # 1. Fetch analysis record
         analysis = await supabase.get_analysis_by_id(analysis_id)
         if not analysis:
             logger.error("analysis_not_found", analysis_id=analysis_id)
             return {"error": "Analysis not found"}
-        
+
         url = analysis["url"]
         logger.info("processing_url", analysis_id=analysis_id, url=url)
-        
+
         # 2. Update status to processing
         await supabase.update_analysis_status(analysis_id, "processing")
-        
+
         # 3. Scrape the page
         try:
             scraped = await scrape_page(url)
@@ -80,7 +78,7 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
                 error_message=e.message,
             )
             return {"error": e.message, "code": e.code}
-        
+
         # 4. Upload screenshot
         screenshot_url = None
         try:
@@ -92,7 +90,7 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
         except Exception as e:
             logger.warning("screenshot_upload_failed", error=str(e))
             # Continue without screenshot
-        
+
         # 5. Analyze with Claude
         try:
             result = await analyze_with_claude(scraped)
@@ -105,7 +103,7 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
                 error_message=str(e),
             )
             raise  # Retry
-        
+
         # 6. Create report
         report = await supabase.create_report(
             analysis_id=analysis_id,
@@ -121,10 +119,7 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
             },
         )
 
-        # 7. Increment quota ONLY on success (moved from endpoint)
-        await supabase.increment_analyses_used(analysis["user_id"])
-
-        # 8. Send email notification
+        # 7. Send email notification
         try:
             profile = await supabase.get_profile(analysis["user_id"])
             if profile and profile.get("email"):
@@ -146,21 +141,21 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
             logger.warning("analysis_email_failed", error=str(e))
             # Don't fail the task if email fails
 
-        # 9. Update analysis status to completed
+        # 8. Update analysis status to completed
         await supabase.update_analysis_status(analysis_id, "completed")
-        
+
         logger.info(
             "task_completed",
             analysis_id=analysis_id,
             report_id=report["id"],
             score=result["score"],
         )
-        
+
         return {
             "report_id": report["id"],
             "score": result["score"],
         }
-        
+
     except SoftTimeLimitExceeded:
         logger.error(
             "task_timeout",
@@ -214,6 +209,11 @@ async def _analyze_page_async(task, analysis_id: str) -> Dict[str, Any]:
             error_message=str(e),
         )
         raise
+
+    finally:
+        # Close the async client to prevent connection leaks in Celery workers
+        service = get_supabase_service()
+        await service.close()
 
 
 # Alias for cleaner imports
