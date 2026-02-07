@@ -177,6 +177,22 @@ class ApiClient {
     return this.request<ReportListItem[]>(`/api/v1/reports?limit=${limit}&offset=${offset}`);
   }
 
+  // PDF Export
+  async downloadReportPdf(reportId: string): Promise<Blob> {
+    const response = await fetch(`${API_URL}/api/v1/reports/${reportId}/pdf`, {
+      headers: {
+        'Authorization': `Bearer ${this.accessToken}`,
+      },
+    });
+    if (!response.ok) {
+      if (response.status === 403) {
+        throw new ApiError('PDF export requires Pro plan', 'PLAN_REQUIRED', 403);
+      }
+      throw new ApiError('Failed to download PDF', 'PDF_ERROR', response.status);
+    }
+    return response.blob();
+  }
+
   // Billing
   async createCheckout(priceId: string) {
     return this.request<{ url: string }>('/api/v1/billing/checkout', {
