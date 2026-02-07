@@ -7,8 +7,6 @@ Generates a styled PDF from a report dict (as returned by SupabaseService.get_re
 from datetime import datetime
 from typing import Any, Dict, List
 
-from weasyprint import HTML
-
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -213,6 +211,8 @@ async def generate_report_pdf(report: Dict[str, Any]) -> bytes:
     Returns:
         PDF file content as bytes.
     """
+    from weasyprint import HTML  # lazy import — avoid crash if system libs missing
+
     report_id = report.get("id", "unknown")
     logger.info("pdf_generation_started", report_id=report_id)
 
