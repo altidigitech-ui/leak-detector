@@ -4,6 +4,7 @@ Webhook endpoints - Handle Stripe events.
 
 from datetime import datetime
 
+import redis
 import stripe
 from fastapi import APIRouter, Request
 
@@ -19,6 +20,16 @@ router = APIRouter()
 
 # Initialize Stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+# Redis client for webhook idempotency (module-level singleton to reuse connections)
+_redis_client = None
+
+
+def get_redis_client():
+    global _redis_client
+    if _redis_client is None:
+        _redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+    return _redis_client
 
 
 @router.post("/stripe")
@@ -52,7 +63,19 @@ async def stripe_webhook(request: Request):
         raise ValidationError("Invalid webhook signature")
     
     logger.info("webhook_received", event_type=event["type"], event_id=event["id"])
-    
+
+    # Check idempotency — Stripe may deliver the same event multiple times.
+    # We use Redis with a 24h TTL to track already-processed event IDs.
+    redis_client = get_redis_client()
+    idempotency_key = f"stripe:webhook:{event['id']}"
+
+    if redis_client.get(idempotency_key):
+        logger.info("webhook_duplicate_skipped", event_id=event["id"], event_type=event["type"])
+        return {"received": True, "duplicate": True}
+
+    # Mark as processing (with TTL of 24 hours)
+    redis_client.setex(idempotency_key, 86400, "processing")
+
     # Get Supabase service
     supabase = get_supabase_service()
     
@@ -84,7 +107,10 @@ async def stripe_webhook(request: Request):
     
     except Exception as e:
         logger.error("webhook_handler_error", event_type=event_type, error=str(e))
-        # Don't raise - return 200 to prevent Stripe retries for non-critical errors
+        # We intentionally return 200 even on handler errors. Returning 4xx/5xx would
+        # cause Stripe to retry the event, which is unlikely to help if our business
+        # logic failed (e.g. missing profile, DB issue). Parsing/signature errors are
+        # raised above as ValidationError (→ 400) before we reach this point.
     
     return {"received": True}
 
