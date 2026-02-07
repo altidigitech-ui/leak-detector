@@ -35,8 +35,8 @@ celery_app.conf.update(
     enable_utc=True,
     
     # Task execution settings
-    task_soft_time_limit=60,  # Soft limit: 60 seconds
-    task_time_limit=90,       # Hard limit: 90 seconds
+    task_soft_time_limit=180,  # Soft limit: 180 seconds
+    task_time_limit=240,       # Hard limit: 240 seconds
     task_acks_late=True,      # Acknowledge after task completes
     
     # Worker settings

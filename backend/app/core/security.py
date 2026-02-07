@@ -5,6 +5,7 @@ Uses direct HTTP calls to Supabase GoTrue API to verify tokens.
 This avoids supabase SDK version conflicts and HS256/ES256 algorithm issues.
 """
 
+import asyncio
 from typing import Optional
 
 import httpx
@@ -19,8 +20,30 @@ security = HTTPBearer()
 # Supabase GoTrue endpoint
 _AUTH_URL = f"{settings.SUPABASE_URL}/auth/v1/user"
 
+# Shared async client with lazy init protected by lock
+_auth_client: Optional[httpx.AsyncClient] = None
+_auth_client_lock = asyncio.Lock()
 
-def verify_supabase_token(token: str) -> dict:
+
+async def _get_auth_client() -> httpx.AsyncClient:
+    """Get or create the shared async HTTP client for auth."""
+    global _auth_client
+    if _auth_client is None or _auth_client.is_closed:
+        async with _auth_client_lock:
+            if _auth_client is None or _auth_client.is_closed:
+                _auth_client = httpx.AsyncClient(timeout=10.0)
+    return _auth_client
+
+
+async def close_auth_client():
+    """Close the shared auth HTTP client."""
+    global _auth_client
+    if _auth_client is not None and not _auth_client.is_closed:
+        await _auth_client.aclose()
+        _auth_client = None
+
+
+async def verify_supabase_token(token: str) -> dict:
     """
     Verify a Supabase JWT token by calling Supabase's GoTrue API.
 
@@ -28,13 +51,13 @@ def verify_supabase_token(token: str) -> dict:
     (signature, expiration, algorithm) regardless of HS256 or ES256.
     """
     try:
-        response = httpx.get(
+        client = await _get_auth_client()
+        response = await client.get(
             _AUTH_URL,
             headers={
                 "Authorization": f"Bearer {token}",
                 "apikey": settings.SUPABASE_SERVICE_KEY,
             },
-            timeout=10.0,
         )
 
         if response.status_code == 401:
@@ -63,11 +86,11 @@ def verify_supabase_token(token: str) -> dict:
         raise AuthenticationError(f"Token verification failed: {str(e)}")
 
 
-def get_user_id_from_token(token: str) -> str:
+async def get_user_id_from_token(token: str) -> str:
     """
     Extract user ID from a Supabase JWT token.
     """
-    payload = verify_supabase_token(token)
+    payload = await verify_supabase_token(token)
     user_id = payload.get("sub")
 
     if not user_id:
@@ -83,7 +106,7 @@ async def get_current_user_id(
     FastAPI dependency to get the current authenticated user ID.
     """
     token = credentials.credentials
-    return get_user_id_from_token(token)
+    return await get_user_id_from_token(token)
 
 
 async def get_optional_user_id(
@@ -99,7 +122,7 @@ async def get_optional_user_id(
         return None
 
     try:
-        return get_user_id_from_token(credentials.credentials)
+        return await get_user_id_from_token(credentials.credentials)
     except AuthenticationError:
         return None
 
