@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ErrorState } from '@/components/shared/error-state';
-import type { ReportCategory, ReportIssue } from '@/types';
+import { PdfDownloadButton } from '@/components/pdf-download-button';
+import type { Plan, ReportCategory, ReportIssue } from '@/types';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -28,6 +29,15 @@ export default async function ReportPage({ params }: PageProps) {
     if (!report) {
       notFound();
     }
+
+    // Fetch user profile to determine plan
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('plan')
+      .eq('id', user?.id)
+      .single();
+
+    const userPlan: Plan = (profile?.plan as Plan) || 'free';
 
     const categories: ReportCategory[] = report.categories || [];
     const criticalIssues = categories.flatMap((c: ReportCategory) =>
@@ -159,13 +169,7 @@ export default async function ReportPage({ params }: PageProps) {
           <Link href="/reports" className="btn-secondary text-center">
             View All Reports
           </Link>
-          <button
-            className="btn-secondary text-center opacity-50 cursor-not-allowed"
-            disabled
-            title="Coming soon"
-          >
-            Download PDF
-          </button>
+          <PdfDownloadButton reportId={report.id} userPlan={userPlan} />
         </div>
       </div>
     );

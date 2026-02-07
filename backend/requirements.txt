@@ -34,6 +34,10 @@ slowapi==0.1.9
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
+# PDF Generation
+weasyprint==62.3
+Pillow==11.1.0
+
 # Utils
 python-multipart==0.0.9
 python-dotenv==1.0.1

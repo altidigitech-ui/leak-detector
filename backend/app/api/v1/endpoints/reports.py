@@ -5,11 +5,13 @@ Reports endpoints - Retrieve analysis reports.
 from typing import List, Optional
 
 from fastapi import APIRouter
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUserID, Supabase
-from app.core.errors import NotFoundError
+from app.core.errors import AuthorizationError, NotFoundError
 from app.core.logging import get_logger
+from app.services.pdf_generator import generate_report_pdf
 
 logger = get_logger(__name__)
 
@@ -158,6 +160,36 @@ def _build_report_data(report: dict) -> ReportData:
         screenshot_url=report.get("screenshot_url"),
         page_metadata=page_metadata,
         created_at=report["created_at"],
+    )
+
+
+@router.get("/{report_id}/pdf")
+async def download_report_pdf(report_id: str, user_id: CurrentUserID, supabase: Supabase):
+    """
+    Download a report as PDF.
+
+    Requires a Pro or Agency plan.
+    """
+    # Check user plan
+    profile = await supabase.get_profile(user_id)
+    if not profile or profile.get("plan", "free") == "free":
+        raise AuthorizationError("PDF export requires a Pro or Agency plan. Please upgrade to access this feature.")
+
+    # Verify ownership and fetch report
+    report = await supabase.get_report(report_id, user_id)
+    if not report:
+        raise NotFoundError("Report")
+
+    pdf_bytes = await generate_report_pdf(report)
+
+    logger.info("pdf_downloaded", report_id=report_id, user_id=user_id)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=leak-detector-report-{report_id[:8]}.pdf",
+        },
     )
 
 

@@ -33,6 +33,8 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     libasound2t64 \
     libatspi2.0-0t64 \
+    libgdk-pixbuf-2.0-0 \
+    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Playwright path BEFORE installing browsers
