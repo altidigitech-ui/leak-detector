@@ -3,12 +3,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { Turnstile } from '@/components/ui/turnstile';
+
+// Cloudflare Turnstile CAPTCHA setup:
+// 1. Go to https://dash.cloudflare.com → Turnstile → Add Site
+// 2. Choose "Managed" as widget type
+// 3. Copy the Site Key and set it as NEXT_PUBLIC_TURNSTILE_SITE_KEY
+// 4. Copy the Secret Key and add it in Supabase Dashboard → Auth → Bot Protection → Enable Turnstile
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +30,9 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          captchaToken: captchaToken ?? undefined,
+        },
       });
 
       if (error) {
@@ -100,7 +113,18 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <button type="submit" className="btn-primary w-full" disabled={loading}>
+            {turnstileSiteKey && (
+              <Turnstile
+                siteKey={turnstileSiteKey}
+                onVerify={setCaptchaToken}
+              />
+            )}
+
+            <button
+              type="submit"
+              className="btn-primary w-full"
+              disabled={loading || (!!turnstileSiteKey && !captchaToken)}
+            >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
