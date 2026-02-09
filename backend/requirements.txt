@@ -36,6 +36,7 @@ passlib[bcrypt]==1.7.4
 
 # PDF Generation
 weasyprint==62.3
+pydyf>=0.10.0,<0.11.0  # pinned: pydyf 0.11+ removed transform() API used by weasyprint 62.x
 Pillow==11.1.0
 
 # Utils

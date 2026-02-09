@@ -5,13 +5,13 @@ Reports endpoints - Retrieve analysis reports.
 from typing import List, Optional
 
 from fastapi import APIRouter
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUserID, Supabase
 from app.core.errors import AuthorizationError, NotFoundError
 from app.core.logging import get_logger
-from app.services.pdf_generator import generate_report_pdf
+from app.services.pdf_generator import PDFGenerationError, generate_report_pdf
 
 logger = get_logger(__name__)
 
@@ -180,7 +180,21 @@ async def download_report_pdf(report_id: str, user_id: CurrentUserID, supabase: 
     if not report:
         raise NotFoundError("Report")
 
-    pdf_bytes = await generate_report_pdf(report)
+    try:
+        pdf_bytes = await generate_report_pdf(report)
+    except PDFGenerationError as exc:
+        logger.error("pdf_download_failed", report_id=report_id, user_id=user_id, error=str(exc))
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": {
+                    "code": "PDF_GENERATION_ERROR",
+                    "message": "Failed to generate PDF report. Please try again later.",
+                    "details": {},
+                },
+            },
+        )
 
     logger.info("pdf_downloaded", report_id=report_id, user_id=user_id)
 
