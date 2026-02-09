@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ErrorState } from '@/components/shared/error-state';
 import { PdfDownloadButton } from '@/components/pdf-download-button';
+import { ReportViewTracker } from '@/components/report-view-tracker';
 import type { Plan, ReportCategory, ReportIssue } from '@/types';
 
 interface PageProps {
@@ -49,6 +50,7 @@ export default async function ReportPage({ params }: PageProps) {
 
     return (
       <div className="max-w-5xl mx-auto animate-fade-in">
+        <ReportViewTracker score={report.score} />
         {/* Header */}
         <div className="mb-8">
           <Link
