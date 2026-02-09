@@ -23,7 +23,7 @@ const plans = [
     price: 0,
     period: 'forever',
     analyses: 3,
-    features: ['3 analyses per month', 'Basic report', 'Email support'],
+    features: ['3 analyses per month', 'Score & issue detection', 'Category breakdown', 'Email support'],
     highlighted: false,
   },
   {
@@ -33,7 +33,7 @@ const plans = [
     period: 'month',
     analyses: 50,
     priceId: 'price_pro_monthly',
-    features: ['50 analyses per month', 'Detailed reports', 'Unlimited history', 'PDF export', 'Priority support'],
+    features: ['50 analyses per month', 'Full detailed recommendations', 'PDF export', 'Unlimited history', 'Priority support'],
     highlighted: true,
   },
   {
@@ -43,7 +43,7 @@ const plans = [
     period: 'month',
     analyses: 200,
     priceId: 'price_agency_monthly',
-    features: ['200 analyses per month', 'Detailed reports', 'Unlimited history', 'PDF export', 'Dedicated support'],
+    features: ['200 analyses per month', 'Full detailed recommendations', 'PDF export', 'Unlimited history', 'Dedicated support'],
     highlighted: false,
   },
 ];

@@ -103,6 +103,28 @@ export default async function ReportPage({ params }: PageProps) {
           </div>
         </div>
 
+        {/* Upgrade Banner for Free Users */}
+        {userPlan === 'free' && (criticalIssues.length > 0 || warningIssues.length > 0) && (
+          <div className="card mb-8 bg-gradient-to-r from-primary-50 to-blue-50 border-primary-200">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 text-lg">
+                  {criticalIssues.length + warningIssues.length} issues found — see how to fix them
+                </h3>
+                <p className="text-gray-600 text-sm mt-1">
+                  Upgrade to Pro to unlock detailed descriptions and actionable recommendations for every issue.
+                </p>
+              </div>
+              <Link
+                href="/billing"
+                className="btn-primary whitespace-nowrap"
+              >
+                Upgrade to Pro — €29/mo
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Screenshot */}
         {report.screenshot_url && (
           <div className="card mb-8">
@@ -149,7 +171,7 @@ export default async function ReportPage({ params }: PageProps) {
               {category.issues && category.issues.length > 0 ? (
                 <div className="space-y-4">
                   {category.issues.map((issue: ReportIssue, index: number) => (
-                    <IssueCard key={index} issue={issue} />
+                    <IssueCard key={index} issue={issue} userPlan={userPlan} />
                   ))}
                 </div>
               ) : (
@@ -265,7 +287,7 @@ function CategoryScoreBar({ category }: { category: ReportCategory }) {
   );
 }
 
-function IssueCard({ issue }: { issue: ReportIssue }) {
+function IssueCard({ issue, userPlan }: { issue: ReportIssue; userPlan: Plan }) {
   const severityConfig = {
     critical: {
       container: 'severity-critical',
@@ -285,6 +307,7 @@ function IssueCard({ issue }: { issue: ReportIssue }) {
   };
 
   const config = severityConfig[issue.severity] || severityConfig.info;
+  const isPaidPlan = userPlan === 'pro' || userPlan === 'agency';
 
   return (
     <div className={`p-5 rounded-xl ${config.container}`}>
@@ -297,15 +320,39 @@ function IssueCard({ issue }: { issue: ReportIssue }) {
               {config.label}
             </span>
           </div>
-          <p className="text-sm opacity-90 mb-4">{issue.description}</p>
 
-          <div className="p-4 bg-white/60 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">💡</span>
-              <span className="font-semibold text-sm">Recommendation</span>
+          {isPaidPlan ? (
+            <>
+              <p className="text-sm opacity-90 mb-4">{issue.description}</p>
+              <div className="p-4 bg-white/60 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">💡</span>
+                  <span className="font-semibold text-sm">Recommendation</span>
+                </div>
+                <p className="text-sm">{issue.recommendation}</p>
+              </div>
+            </>
+          ) : (
+            <div className="mt-3 p-4 bg-white/40 rounded-lg border border-dashed border-gray-300">
+              <div className="flex items-center gap-3">
+                <span className="text-lg">🔒</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700">
+                    Detailed description & fix recommendation
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Upgrade to Pro to see exactly how to fix this issue
+                  </p>
+                </div>
+                <Link
+                  href="/billing"
+                  className="text-xs bg-primary-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-primary-700 transition-colors whitespace-nowrap"
+                >
+                  Upgrade
+                </Link>
+              </div>
             </div>
-            <p className="text-sm">{issue.recommendation}</p>
-          </div>
+          )}
         </div>
       </div>
     </div>
