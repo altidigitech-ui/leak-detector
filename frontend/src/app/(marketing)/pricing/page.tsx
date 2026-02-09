@@ -47,7 +47,8 @@ export default function PricingPage() {
       description: 'Perfect to get started',
       features: [
         '3 analyses per month',
-        'Basic report',
+        'Score & issue detection',
+        'Category breakdown',
         'Email support',
       ],
       cta: 'Get Started',
@@ -60,9 +61,9 @@ export default function PricingPage() {
       description: 'For growing businesses',
       features: [
         '50 analyses per month',
-        'Detailed reports',
-        'Unlimited history',
+        'Full detailed recommendations',
         'PDF export',
+        'Unlimited history',
         'Priority support',
       ],
       cta: 'Start Pro',
@@ -75,9 +76,9 @@ export default function PricingPage() {
       description: 'For teams and agencies',
       features: [
         '200 analyses per month',
-        'Detailed reports',
-        'Unlimited history',
+        'Full detailed recommendations',
         'PDF export',
+        'Unlimited history',
         'Dedicated support',
       ],
       cta: 'Start Agency',

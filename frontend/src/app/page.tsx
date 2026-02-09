@@ -17,7 +17,7 @@ const plans = [
     price: '0',
     period: 'forever',
     description: 'Perfect to get started',
-    features: ['3 analyses per month', 'Basic report', 'Email support'],
+    features: ['3 analyses per month', 'Score & issue detection', 'Category breakdown', 'Email support'],
     cta: 'Get Started Free',
     href: '/register',
     highlighted: false,
@@ -27,7 +27,7 @@ const plans = [
     price: '29',
     period: 'per month',
     description: 'For growing businesses',
-    features: ['50 analyses per month', 'Detailed reports', 'Unlimited history', 'PDF export', 'Priority support'],
+    features: ['50 analyses per month', 'Full detailed recommendations', 'PDF export', 'Unlimited history', 'Priority support'],
     cta: 'Start Pro',
     href: '/register?plan=pro',
     highlighted: true,
@@ -37,7 +37,7 @@ const plans = [
     price: '99',
     period: 'per month',
     description: 'For teams and agencies',
-    features: ['200 analyses per month', 'Detailed reports', 'Unlimited history', 'PDF export', 'Dedicated support'],
+    features: ['200 analyses per month', 'Full detailed recommendations', 'PDF export', 'Unlimited history', 'Dedicated support'],
     cta: 'Start Agency',
     href: '/register?plan=agency',
     highlighted: false,
@@ -88,7 +88,7 @@ export default function HomePage() {
             <div className="text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-primary-300 text-sm mb-6">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                Trusted by 2,000+ marketers
+                AI-Powered CRO Analysis — 8 Dimensions Scored
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
@@ -309,7 +309,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="section-heading">See What You Get</h2>
             <p className="section-subheading">
-              A real analysis with actionable recommendations
+              A sample analysis with actionable recommendations
             </p>
           </div>
 
@@ -448,7 +448,7 @@ export default function HomePage() {
             Ready to Fix Your Landing Page?
           </h2>
           <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-            Join thousands of marketers who improved their conversion rates with Leak Detector.
+            Get a detailed conversion audit in 60 seconds. Find exactly what makes visitors leave your page.
           </p>
           <Link href="/register" className="btn-primary text-lg px-10 py-4 inline-block">
             Start Free Analysis
