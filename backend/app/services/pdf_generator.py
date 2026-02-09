@@ -12,6 +12,11 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
+class PDFGenerationError(Exception):
+    """Raised when PDF generation fails."""
+    pass
+
+
 def _score_color(score: int) -> str:
     """Return a hex color based on score thresholds."""
     if score >= 80:
@@ -217,7 +222,19 @@ async def generate_report_pdf(report: Dict[str, Any]) -> bytes:
     logger.info("pdf_generation_started", report_id=report_id)
 
     html_content = _build_html(report)
-    pdf_bytes = HTML(string=html_content).write_pdf()
+
+    try:
+        pdf_bytes = HTML(string=html_content).write_pdf()
+    except Exception as exc:
+        logger.error(
+            "pdf_generation_failed",
+            report_id=report_id,
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
+        raise PDFGenerationError(
+            f"Failed to generate PDF: {type(exc).__name__}: {exc}"
+        ) from exc
 
     logger.info("pdf_generation_completed", report_id=report_id, size_bytes=len(pdf_bytes))
     return pdf_bytes
