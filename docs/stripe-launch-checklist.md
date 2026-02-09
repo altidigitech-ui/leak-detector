@@ -3,7 +3,7 @@
 ## Before Going Live
 1. [ ] Create products in Stripe Dashboard (Live mode):
    - Pro Plan: €29/month recurring
-   - Agency Plan: €79/month recurring
+   - Agency Plan: €99/month recurring
 2. [ ] Copy the Price IDs into Railway env vars:
    - STRIPE_PRICE_PRO_MONTHLY=price_xxx
    - STRIPE_PRICE_AGENCY_MONTHLY=price_xxx

@@ -48,7 +48,6 @@ export default function PricingPage() {
       features: [
         '3 analyses per month',
         'Basic report',
-        '7-day history',
         'Email support',
       ],
       cta: 'Get Started',
@@ -76,11 +75,10 @@ export default function PricingPage() {
       description: 'For teams and agencies',
       features: [
         '200 analyses per month',
-        'White-label reports',
-        'API access',
-        'Multiple users',
+        'Detailed reports',
+        'Unlimited history',
+        'PDF export',
         'Dedicated support',
-        'Custom branding',
       ],
       cta: 'Start Agency',
       highlighted: false,
