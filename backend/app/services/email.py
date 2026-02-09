@@ -101,7 +101,7 @@ async def send_subscription_email(
 
     features_map = {
         "pro": "Detailed reports, PDF export, priority support",
-        "agency": "White-label reports, API access, dedicated support",
+        "agency": "200 analyses/month, PDF export, dedicated support",
     }
 
     try:

@@ -23,7 +23,7 @@ const plans = [
     price: 0,
     period: 'forever',
     analyses: 3,
-    features: ['3 analyses per month', 'Basic report', '7-day history', 'Email support'],
+    features: ['3 analyses per month', 'Basic report', 'Email support'],
     highlighted: false,
   },
   {
@@ -43,7 +43,7 @@ const plans = [
     period: 'month',
     analyses: 200,
     priceId: 'price_agency_monthly',
-    features: ['200 analyses per month', 'White-label reports', 'API access', 'Multiple users', 'Dedicated support'],
+    features: ['200 analyses per month', 'Detailed reports', 'Unlimited history', 'PDF export', 'Dedicated support'],
     highlighted: false,
   },
 ];
@@ -262,7 +262,7 @@ export default function BillingPage() {
               <div className="text-center mb-6 pt-2">
                 <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
                 <div className="mt-3">
-                  <span className="text-4xl font-bold">{plan.price}</span>
+                  <span className="text-4xl font-bold">€{plan.price}</span>
                   <span className="text-gray-500">/{plan.period}</span>
                 </div>
                 <p className="text-sm text-gray-500 mt-2">{plan.analyses} analyses/month</p>

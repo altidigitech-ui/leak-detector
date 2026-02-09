@@ -112,7 +112,7 @@ export default function TermsPage() {
                 <li>Analyze pages you do not own or have permission to analyze</li>
                 <li>Engage in excessive automated requests or abuse the API</li>
                 <li>Attempt to reverse engineer, decompile, or extract our AI models</li>
-                <li>Resell, redistribute, or white-label reports without an Agency subscription</li>
+                <li>Resell or redistribute reports without authorization</li>
                 <li>Use the Service for any illegal or unauthorized purpose</li>
                 <li>Interfere with or disrupt the Service or its infrastructure</li>
               </ul>
