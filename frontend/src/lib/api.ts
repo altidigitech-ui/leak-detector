@@ -195,7 +195,7 @@ class ApiClient {
 
   // Billing
   async createCheckout(priceId: string) {
-    return this.request<{ url: string }>('/api/v1/billing/checkout', {
+    return this.request<{ url?: string; upgraded?: boolean; plan?: string; message?: string }>('/api/v1/billing/checkout', {
       method: 'POST',
       body: JSON.stringify({ price_id: priceId }),
     });

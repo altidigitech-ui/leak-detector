@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { analytics } from '@/lib/analytics';
@@ -51,15 +52,14 @@ const plans = [
 export default function BillingPage() {
   const supabase = useMemo(() => createClient(), []);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [billing, setBilling] = useState<BillingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    loadBillingStatus();
-  }, []);
-
-  const loadBillingStatus = async () => {
+  const loadBillingStatus = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -72,13 +72,62 @@ export default function BillingPage() {
       if (response.ok) {
         const data = await response.json();
         setBilling(data.data);
+        return data.data as BillingData;
       }
     } catch {
       toast({ type: 'error', message: 'Failed to load billing information' });
     } finally {
       setLoading(false);
     }
-  };
+    return null;
+  }, [supabase, toast]);
+
+  // BUG 5 FIX: Handle post-checkout query params and poll for webhook updates
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+
+    if (success === 'true') {
+      toast({ type: 'success', message: 'Payment successful! Updating your plan...' });
+
+      // Poll billing status every 2s for up to 10s to catch webhook update
+      let pollCount = 0;
+      const initialPlan = billing?.plan;
+
+      pollingRef.current = setInterval(async () => {
+        pollCount++;
+        const updated = await loadBillingStatus();
+
+        // Stop polling if plan changed or max attempts reached
+        if ((updated && updated.plan !== 'free' && updated.plan !== initialPlan) || pollCount >= 5) {
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+          }
+          if (updated && updated.plan !== 'free') {
+            toast({ type: 'success', message: `You are now on the ${updated.plan.charAt(0).toUpperCase() + updated.plan.slice(1)} plan!` });
+          }
+        }
+      }, 2000);
+
+      // Clean URL params without full reload
+      router.replace('/billing', { scroll: false });
+    } else if (canceled === 'true') {
+      toast({ type: 'error', message: 'Payment canceled. No charges were made.' });
+      router.replace('/billing', { scroll: false });
+    }
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    loadBillingStatus();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpgrade = async (priceId: string) => {
     const plan = plans.find(p => p.priceId === priceId);
@@ -104,6 +153,14 @@ export default function BillingPage() {
         throw new Error(data.error?.message || 'Failed to start checkout');
       }
 
+      // Handle inline upgrade response (Bug 2 — no redirect URL)
+      if (data.upgraded) {
+        toast({ type: 'success', message: data.message || 'Plan upgraded!' });
+        await loadBillingStatus();
+        return;
+      }
+
+      // Handle checkout redirect (free → paid)
       if (data.url) {
         window.location.href = data.url;
       }
@@ -262,7 +319,7 @@ export default function BillingPage() {
               <div className="text-center mb-6 pt-2">
                 <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
                 <div className="mt-3">
-                  <span className="text-4xl font-bold">€{plan.price}</span>
+                  <span className="text-4xl font-bold">&euro;{plan.price}</span>
                   <span className="text-gray-500">/{plan.period}</span>
                 </div>
                 <p className="text-sm text-gray-500 mt-2">{plan.analyses} analyses/month</p>
@@ -302,7 +359,7 @@ export default function BillingPage() {
                   } disabled:opacity-50`}
                 >
                   {actionLoading === plan.priceId
-                    ? 'Redirecting...'
+                    ? 'Processing...'
                     : isDowngrade
                     ? 'Contact Support'
                     : `Upgrade to ${plan.name}`}
