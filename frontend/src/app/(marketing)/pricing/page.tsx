@@ -34,6 +34,14 @@ export default function PricingPage() {
     });
 
     const data = await response.json();
+
+    // Handle inline upgrade response (existing subscriber changing plan)
+    if (data.upgraded) {
+      window.location.href = '/billing?success=true';
+      return;
+    }
+
+    // Handle checkout redirect (free → paid)
     if (data.url) {
       window.location.href = data.url;
     }
